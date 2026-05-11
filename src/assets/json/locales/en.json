@@ -102,6 +102,28 @@
       "statement": "Statement"
     }
   },
+  "matrix": {
+    "title": "Opinion Matrix",
+    "back": "← Dashboard",
+    "cellBack": "← Matrix",
+    "tabNumerical": "S\u2093 (Numerical)",
+    "tabCategorical": "S\u1d67 (Categorical)",
+    "loading": "Loading…",
+    "empty": "No data found on chain",
+    "organ": "Organ",
+    "loadError": "Failed to load cell",
+    "noHistory": "No history yet",
+    "noData": "No data yet",
+    "mean": "Mean",
+    "stdev": "Std dev",
+    "mode": "Mode",
+    "basedOn": "Based on {n} samples",
+    "historyTime": "Time",
+    "historyAuthor": "Author",
+    "historyValue": "Value",
+    "loadMore": "Load more",
+    "proposeValue": "Propose Value"
+  },
   "city": "Chelyabinsk",
   "devCredit": "Developed by RASSVET",
   "titles": [

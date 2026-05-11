@@ -102,6 +102,28 @@
       "statement": "Высказывание"
     }
   },
+  "matrix": {
+    "title": "Матрица мнений",
+    "back": "← Панель",
+    "cellBack": "← Матрица",
+    "tabNumerical": "S\u2093 (Числовая)",
+    "tabCategorical": "S\u1d67 (Категориальная)",
+    "loading": "Загрузка…",
+    "empty": "Данных в цепочке не найдено",
+    "organ": "Орган",
+    "loadError": "Не удалось загрузить ячейку",
+    "noHistory": "История пуста",
+    "noData": "Данных нет",
+    "mean": "Среднее",
+    "stdev": "Ст. откл.",
+    "mode": "Мода",
+    "basedOn": "На основе {n} значений",
+    "historyTime": "Время",
+    "historyAuthor": "Автор",
+    "historyValue": "Значение",
+    "loadMore": "Загрузить ещё",
+    "proposeValue": "Предложить значение"
+  },
   "city": "Челябинск",
   "devCredit": "Разработано в Партии РАССВЕТ",
   "titles": [

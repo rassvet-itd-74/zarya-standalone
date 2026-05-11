@@ -124,6 +124,38 @@
         </div>
       </div>
 
+      <!-- Matrix browser -->
+      <div id="matrix-view" class="view matrix" style="display:none">
+        <div class="matrix__header">
+          <button class="btn btn--ghost btn--sm" id="matrix-back-btn">← Dashboard</button>
+          <h2 class="matrix__title" id="matrix-title">Matrix</h2>
+          <button class="btn btn--ghost btn--sm" id="matrix-refresh-btn">⟳</button>
+        </div>
+        <div class="matrix__tabs" role="tablist">
+          <button class="matrix__tab matrix__tab--active" id="matrix-tab-numerical" role="tab">S_X</button>
+          <button class="matrix__tab" id="matrix-tab-categorical" role="tab">S_Y</button>
+        </div>
+        <p id="matrix-loading" class="matrix__loading"></p>
+        <div id="matrix-table-wrap" class="matrix__table-wrap" style="display:none">
+          <table id="matrix-table" class="matrix__table"></table>
+        </div>
+      </div>
+
+      <!-- Cell detail -->
+      <div id="cell-detail-view" class="view cell-detail" style="display:none">
+        <div class="cell-detail__header">
+          <button class="btn btn--ghost btn--sm" id="cell-back-btn">← Matrix</button>
+          <h2 class="cell-detail__title" id="cell-title"></h2>
+        </div>
+        <div id="cell-organ" class="cell-detail__organ"></div>
+        <div id="cell-aggregation" class="cell-detail__aggregation"></div>
+        <div id="cell-history" class="cell-detail__history"></div>
+        <div class="cell-detail__actions">
+          <button class="btn btn--sm btn--outline" id="cell-load-more-btn" style="display:none">Load more</button>
+          <button class="btn btn--sm" id="cell-propose-btn">Propose Value</button>
+        </div>
+      </div>
+
       <!-- Network / DAO settings -->
       <div id="settings-view" class="view settings-form" style="display:none">
         <h2 class="settings-form__title">Network Settings</h2>

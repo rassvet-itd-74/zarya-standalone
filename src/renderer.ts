@@ -5,6 +5,7 @@ import { currentAddress, setCurrentAddress } from './state';
 import { show } from './utils';
 import { showDashboard } from './views/dashboard';
 import { showVotings, applyVotingsTranslations } from './views/votings';
+import { showMatrix, applyMatrixTranslations } from './views/matrix';
 
 declare global {
   interface Window {
@@ -119,6 +120,7 @@ function applyTranslations(): void {
   (document.getElementById('organ-code-input') as HTMLInputElement).placeholder = t('organs.codePlaceholder');
 
   applyVotingsTranslations();
+  applyMatrixTranslations();
 
   langToggle.textContent = currentLang() === 'ru' ? 'EN' : 'RU';
   (document.getElementById('app-city')       as HTMLElement).textContent = t('city');
@@ -287,9 +289,7 @@ langToggle.addEventListener('click', async () => {
 });
 (document.getElementById('dash-wallet-btn')  as HTMLButtonElement).addEventListener('click', () => show('wallet-view'));
 (document.getElementById('dash-votings-btn') as HTMLButtonElement).addEventListener('click', () => showVotings());
-(document.getElementById('dash-matrix-btn')  as HTMLButtonElement).addEventListener('click', () => {
-  // Phase 5 вЂ” placeholder
-});
+(document.getElementById('dash-matrix-btn')  as HTMLButtonElement).addEventListener('click', () => showMatrix());
 
 // ---- Init ----
 (async () => {
