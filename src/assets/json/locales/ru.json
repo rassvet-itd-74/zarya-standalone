@@ -38,6 +38,21 @@
     "errorInvalidAddress": "Введите корректный адрес контракта (0x\u2026).",
     "errorInvalidChainId": "Введите корректный идентификатор сети."
   },
+  "dashboard": {
+    "title": "Панель управления",
+    "addressLabel": "Адрес",
+    "organsLabel": "Партийные органы",
+    "activeVotingsLabel": "Активные голосования",
+    "votingsBtn": "Голосования",
+    "matrixBtn": "Матрица",
+    "settingsBtn": "Настройки",
+    "walletBtn": "Кошелёк",
+    "backBtn": "\u2190 Панель",
+    "block": "Блок",
+    "offline": "Нет связи",
+    "loading": "Загрузка\u2026",
+    "noOrgans": "Членство не найдено"
+  },
   "importBtn": "Импорт кошелька",
   "importDone": "Кошелёк импортирован. Разблокируйте его своим паролем.",
   "importCancelled": "Импорт отменён.",

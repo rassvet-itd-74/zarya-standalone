@@ -23,6 +23,8 @@ declare global {
       getLogs(eventName: string, fromBlock?: bigint): Promise<unknown[]>;
       watch(eventName: string): Promise<void>;
       unwatch(eventName: string): Promise<void>;
+      chain(): Promise<{ blockNumber: string; chainId: number }>;
+      membership(address: string): Promise<string[]>;
       onEvent(cb: (eventName: string, logs: unknown[]) => void): () => void;
     };
   }
@@ -36,10 +38,83 @@ function show(id: string) {
   if (target) target.style.display = '';
 }
 
-function showWallet(address: string) {
-  const el = document.getElementById('address');
-  if (el) el.textContent = address;
-  show('wallet-view');
+// Address of the currently unlocked key — set after unlock/create
+let currentAddress = '';
+
+// Predefined deployment defaults
+const DEFAULT_CONTRACT_ADDRESS = '0x75BbACe4A6720636622F1a344B13c5DC193D06a4';
+const DEFAULT_CHAIN_ID = 111555111;
+
+async function afterUnlock(address: string) {
+  currentAddress = address;
+  // Keep wallet-view address in sync for the export flow
+  const addrEl = document.getElementById('address');
+  if (addrEl) addrEl.textContent = address;
+
+  const config = await window.configAPI.read();
+  if (!config) {
+    contractAddressInput.value = DEFAULT_CONTRACT_ADDRESS;
+    chainIdInput.value = String(DEFAULT_CHAIN_ID);
+    settingsStatus.textContent = '';
+    show('settings-view');
+    return;
+  }
+  await showDashboard(address);
+}
+
+async function countActiveVotings(): Promise<number> {
+  const [created, finalized] = await Promise.all([
+    window.zaryaAPI.getLogs('VotingCreated'),
+    window.zaryaAPI.getLogs('VotingFinalized'),
+  ]);
+  const finalizedIds = new Set(
+    finalized.map(log => ((log as Record<string, unknown>).args as Record<string, unknown>)?.votingId?.toString()),
+  );
+  const now = Math.floor(Date.now() / 1000);
+  return created.filter(log => {
+    const args = ((log as Record<string, unknown>).args as Record<string, unknown>) ?? {};
+    return !finalizedIds.has(args.votingId?.toString()) && Number(args.endTime ?? 0) > now;
+  }).length;
+}
+
+async function showDashboard(address: string) {
+  // Render skeleton immediately
+  (document.getElementById('dashboard-address') as HTMLElement).textContent = address;
+  (document.getElementById('dashboard-chain-id') as HTMLElement).textContent = '';
+  (document.getElementById('dashboard-block') as HTMLElement).textContent = '';
+  (document.getElementById('dashboard-organs') as HTMLElement).innerHTML =
+    `<span class="dashboard__organ-none">${t('dashboard.loading')}</span>`;
+  (document.getElementById('dashboard-votings-count') as HTMLElement).textContent = '…';
+  show('dashboard-view');
+
+  // Load data in parallel; failures are tolerated
+  const [chainResult, organsResult, votingsResult] = await Promise.allSettled([
+    window.zaryaAPI.chain(),
+    window.zaryaAPI.membership(address),
+    countActiveVotings(),
+  ]);
+
+  if (chainResult.status === 'fulfilled') {
+    (document.getElementById('dashboard-chain-id') as HTMLElement).textContent =
+      `Chain ${chainResult.value.chainId}`;
+    (document.getElementById('dashboard-block') as HTMLElement).textContent =
+      `${t('dashboard.block')} #${chainResult.value.blockNumber}`;
+  } else {
+    (document.getElementById('dashboard-chain-id') as HTMLElement).textContent =
+      t('dashboard.offline');
+  }
+
+  const organsEl = document.getElementById('dashboard-organs') as HTMLElement;
+  if (organsResult.status === 'fulfilled' && organsResult.value.length > 0) {
+    organsEl.innerHTML = organsResult.value
+      .map(id => `<span class="dashboard__organ-tag">${id}</span>`)
+      .join('');
+  } else {
+    organsEl.innerHTML = `<span class="dashboard__organ-none">${t('dashboard.noOrgans')}</span>`;
+  }
+
+  (document.getElementById('dashboard-votings-count') as HTMLElement).textContent =
+    votingsResult.status === 'fulfilled' ? String(votingsResult.value) : '?';
 }
 
 // --- DOM refs ---
@@ -64,6 +139,11 @@ const settingsBackBtn  = document.getElementById('settings-back-btn')  as HTMLBu
 const settingsStatus   = document.getElementById('settings-status')    as HTMLElement;
 const contractAddressInput = document.getElementById('contract-address') as HTMLInputElement;
 const chainIdInput         = document.getElementById('chain-id')         as HTMLInputElement;
+const dashVotingsBtn  = document.getElementById('dash-votings-btn')  as HTMLButtonElement;
+const dashMatrixBtn   = document.getElementById('dash-matrix-btn')   as HTMLButtonElement;
+const dashSettingsBtn = document.getElementById('dash-settings-btn') as HTMLButtonElement;
+const dashWalletBtn   = document.getElementById('dash-wallet-btn')   as HTMLButtonElement;
+const walletBackBtn   = document.getElementById('wallet-back-btn')   as HTMLButtonElement;
 
 // --- Theme ---
 const savedTheme = (localStorage.getItem('theme') ?? 'light') as 'light' | 'dark';
@@ -106,6 +186,16 @@ function applyTranslations() {
   settingsSaveBtn.textContent = t('settings.saveBtn');
   settingsBackBtn.textContent = t('settings.backBtn');
 
+  (document.getElementById('dash-title')          as HTMLElement).textContent = t('dashboard.title');
+  (document.getElementById('dash-address-label')  as HTMLElement).textContent = t('dashboard.addressLabel');
+  (document.getElementById('dash-organs-label')   as HTMLElement).textContent = t('dashboard.organsLabel');
+  (document.getElementById('dash-votings-label')  as HTMLElement).textContent = t('dashboard.activeVotingsLabel');
+  dashVotingsBtn.textContent  = t('dashboard.votingsBtn');
+  dashMatrixBtn.textContent   = t('dashboard.matrixBtn');
+  dashSettingsBtn.textContent = t('dashboard.settingsBtn');
+  dashWalletBtn.textContent   = t('dashboard.walletBtn');
+  walletBackBtn.textContent   = t('dashboard.backBtn');
+
   langToggle.textContent = currentLang() === 'ru' ? 'EN' : 'RU';
   (document.getElementById('app-city') as HTMLElement).textContent = t('city');
   (document.getElementById('app-dev-credit') as HTMLElement).textContent = t('devCredit');
@@ -128,7 +218,7 @@ createBtn.addEventListener('click', async () => {
   createBtn.textContent = t('setup.generating');
   try {
     const address = await window.electronAPI.createKey(pw);
-    showWallet(address);
+    await afterUnlock(address);
   } catch (e: unknown) {
     createError.textContent = e instanceof Error ? e.message : String(e);
   } finally {
@@ -153,7 +243,7 @@ unlockBtn.addEventListener('click', async () => {
   unlockBtn.textContent = t('unlock.unlocking');
   try {
     const address = await window.electronAPI.unlockKey(pw);
-    showWallet(address);
+    await afterUnlock(address);
   } catch (e: unknown) {
     unlockError.textContent = e instanceof Error ? e.message : String(e);
   } finally {
@@ -194,14 +284,19 @@ importBtn.addEventListener('click', async () => {
 settingsOpenBtn.addEventListener('click', async () => {
   settingsStatus.textContent = '';
   const config = await window.configAPI.read();
-  if (config) {
-    contractAddressInput.value = config.contractAddress;
-    chainIdInput.value = String(config.chainId);
-  }
+  contractAddressInput.value = config?.contractAddress ?? DEFAULT_CONTRACT_ADDRESS;
+  chainIdInput.value = String(config?.chainId ?? DEFAULT_CHAIN_ID);
   show('settings-view');
 });
 
-settingsBackBtn.addEventListener('click', () => {
+settingsBackBtn.addEventListener('click', async () => {
+  if (currentAddress) {
+    const config = await window.configAPI.read();
+    if (config) {
+      await showDashboard(currentAddress);
+      return;
+    }
+  }
   show('wallet-view');
 });
 
@@ -234,7 +329,13 @@ settingsSaveBtn.addEventListener('click', async () => {
   try {
     await window.configAPI.write({ contractAddress, chainId });
     settingsStatus.textContent = t('settings.saved');
-    setTimeout(() => show('wallet-view'), 800);
+    setTimeout(async () => {
+      if (currentAddress) {
+        await showDashboard(currentAddress);
+      } else {
+        show('wallet-view');
+      }
+    }, 800);
   } catch (e: unknown) {
     settingsStatus.textContent = e instanceof Error ? e.message : String(e);
   } finally {
@@ -250,12 +351,45 @@ langToggle.addEventListener('click', async () => {
   applyRandomTitle();
 });
 
+// --- Dashboard navigation ---
+dashSettingsBtn.addEventListener('click', () => {
+  settingsStatus.textContent = '';
+  show('settings-view');
+});
+
+dashWalletBtn.addEventListener('click', () => {
+  show('wallet-view');
+});
+
+dashVotingsBtn.addEventListener('click', () => {
+  // Phase 4 — placeholder
+});
+
+dashMatrixBtn.addEventListener('click', () => {
+  // Phase 5 — placeholder
+});
+
+walletBackBtn.addEventListener('click', async () => {
+  if (currentAddress) {
+    const config = await window.configAPI.read();
+    if (config) {
+      await showDashboard(currentAddress);
+      return;
+    }
+  }
+  // No config: stay on wallet-view (user needs to configure first)
+});
+
 // --- Init ---
 (async () => {
   await initI18n();
   applyTranslations();
   applyRandomTitle();
   appLogo.src = logoRound;
+
+  // Pre-fill settings with defaults so they're visible from the start
+  contractAddressInput.value = DEFAULT_CONTRACT_ADDRESS;
+  chainIdInput.value = String(DEFAULT_CHAIN_ID);
   const exists = await window.electronAPI.hasKey();
   show(exists ? 'unlock-view' : 'setup-view');
   if (exists) unlockPassword.focus();

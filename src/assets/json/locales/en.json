@@ -38,6 +38,21 @@
     "errorInvalidAddress": "Enter a valid contract address (0x\u2026).",
     "errorInvalidChainId": "Enter a valid chain ID."
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "addressLabel": "Address",
+    "organsLabel": "Party Organs",
+    "activeVotingsLabel": "Active Votings",
+    "votingsBtn": "Votings",
+    "matrixBtn": "Matrix",
+    "settingsBtn": "Settings",
+    "walletBtn": "Wallet",
+    "backBtn": "\u2190 Dashboard",
+    "block": "Block",
+    "offline": "Offline",
+    "loading": "Loading\u2026",
+    "noOrgans": "No memberships found"
+  },
   "importBtn": "Import keystore",
   "importDone": "Keystore imported. Please unlock with your password.",
   "importCancelled": "Import cancelled.",

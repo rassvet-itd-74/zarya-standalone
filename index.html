@@ -54,8 +54,36 @@
         <div class="wallet__actions">
           <button class="btn btn--outline" id="export-btn">Export keystore</button>
           <button class="btn btn--ghost" id="settings-open-btn">Settings</button>
+          <button class="btn btn--ghost" id="wallet-back-btn">&#8592; Dashboard</button>
         </div>
         <p id="export-status" class="wallet__status"></p>
+      </div>
+
+      <!-- Dashboard — shown after unlock when config exists -->
+      <div id="dashboard-view" class="view dashboard" style="display:none">
+        <div class="dashboard__header">
+          <h2 class="dashboard__title" id="dash-title">Dashboard</h2>
+          <span class="dashboard__chain-badge" id="dashboard-chain-id"></span>
+        </div>
+        <div class="dashboard__address-block">
+          <span class="dashboard__label" id="dash-address-label">Address</span>
+          <code id="dashboard-address" class="dashboard__address"></code>
+        </div>
+        <p id="dashboard-block" class="dashboard__muted"></p>
+        <div class="dashboard__section">
+          <span class="dashboard__label" id="dash-organs-label">Organs</span>
+          <div id="dashboard-organs" class="dashboard__organs"></div>
+        </div>
+        <div class="dashboard__section dashboard__section--row">
+          <span class="dashboard__label" id="dash-votings-label">Active Votings</span>
+          <span id="dashboard-votings-count" class="dashboard__count-badge">—</span>
+        </div>
+        <div class="dashboard__nav">
+          <button class="btn" id="dash-votings-btn">Votings</button>
+          <button class="btn btn--outline" id="dash-matrix-btn">Matrix</button>
+          <button class="btn btn--ghost" id="dash-settings-btn">Settings</button>
+          <button class="btn btn--ghost" id="dash-wallet-btn">Wallet</button>
+        </div>
       </div>
 
       <!-- Network / DAO settings -->

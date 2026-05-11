@@ -41,6 +41,12 @@ contextBridge.exposeInMainWorld('zaryaAPI', {
   unwatch: (eventName: string): Promise<void> =>
     ipcRenderer.invoke('zarya:unwatch', eventName),
 
+  chain: (): Promise<{ blockNumber: string; chainId: number }> =>
+    ipcRenderer.invoke('zarya:chain'),
+
+  membership: (address: string): Promise<string[]> =>
+    ipcRenderer.invoke('zarya:membership', address),
+
   /**
    * Subscribe to events pushed by the main process via watchContractEvent.
    * Returns an unsubscribe function.

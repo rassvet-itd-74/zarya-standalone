@@ -14,6 +14,8 @@ import {
   contractWatch,
   contractUnwatch,
   unwatchAll,
+  getChainInfo,
+  getMemberships,
 } from './zaryaClient';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -137,4 +139,10 @@ ipcMain.handle('zarya:watch', (event, eventName: string) =>
 
 ipcMain.handle('zarya:unwatch', (_event, eventName: string) =>
   contractUnwatch(eventName),
+);
+
+ipcMain.handle('zarya:chain', () => getChainInfo());
+
+ipcMain.handle('zarya:membership', (_event, address: string) =>
+  getMemberships(address),
 );

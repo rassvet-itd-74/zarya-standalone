@@ -174,3 +174,72 @@ export function unwatchAll(): void {
   for (const fn of unwatchers.values()) fn();
   unwatchers.clear();
 }
+
+// ---------------------------------------------------------------------------
+// Chain-level helpers
+// ---------------------------------------------------------------------------
+
+export async function getChainInfo(): Promise<{ blockNumber: string; chainId: number }> {
+  const client = getPublic();
+  const [blockNumber, chainId] = await Promise.all([
+    client.getBlockNumber(),
+    client.getChainId(),
+  ]);
+  return { blockNumber: blockNumber.toString(), chainId };
+}
+
+/**
+ * Discovers which party organs the given address belongs to by enumerating
+ * (organType × region × number) triples and batch-checking isMember.
+ * All calls are read-only view/pure calls — no gas required.
+ */
+export async function getMemberships(
+  address: string,
+  maxOrganType = 5,
+  maxRegion = 3,
+  maxNumber = 2,
+): Promise<string[]> {
+  const client = getPublic();
+  const contractAddress = currentConfig!.contractAddress as `0x${string}`;
+  const abi = zaryaAbi as Abi;
+
+  // Build all (organType, region, number) triples
+  const combos: [number, number, bigint][] = [];
+  for (let ot = 0; ot < maxOrganType; ot++)
+    for (let r = 0; r < maxRegion; r++)
+      for (let n = 0n; n < BigInt(maxNumber); n++)
+        combos.push([ot, r, n]);
+
+  // Compute organ bytes32 for each combo (pure — no state access)
+  const organs = await Promise.all(
+    combos.map(([ot, r, n]) =>
+      client
+        .readContract({ address: contractAddress, abi, functionName: 'getPartyOrgan', args: [ot, r, n] })
+        .catch(() => null),
+    ),
+  );
+
+  // Check isMember in parallel
+  const memberChecks = await Promise.all(
+    organs.map(organ =>
+      organ != null
+        ? client
+            .readContract({ address: contractAddress, abi, functionName: 'isMember', args: [organ, address] })
+            .catch(() => false)
+        : false,
+    ),
+  );
+
+  // Fetch human-readable identifiers for positive matches only
+  const identifiers = await Promise.all(
+    combos.map(async ([ot, r, n], i) => {
+      if (!memberChecks[i]) return null;
+      return client
+        .readContract({ address: contractAddress, abi, functionName: 'getPartyOrganIdentifier', args: [ot, r, n] })
+        .then(v => String(v))
+        .catch(() => null);
+    }),
+  );
+
+  return identifiers.filter((id): id is string => id !== null);
+}
