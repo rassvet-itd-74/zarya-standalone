@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import { hasKey, createKey, loadKey } from './keyManager';
+import { hasKey, createKey, loadKey, exportKey, importKey } from './keyManager';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -13,6 +13,8 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    icon: path.join(__dirname, '../../src/assets/images/icons/favicon.ico'),
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -61,3 +63,7 @@ ipcMain.handle('key:hasKey', () => hasKey());
 ipcMain.handle('key:create', (_event, password: string) => createKey(password));
 
 ipcMain.handle('key:unlock', (_event, password: string) => loadKey(password));
+
+ipcMain.handle('key:export', () => exportKey());
+
+ipcMain.handle('key:import', () => importKey());

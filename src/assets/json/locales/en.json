@@ -18,6 +18,20 @@
   },
   "wallet": {
     "title": "Wallet",
-    "addressLabel": "Address"
-  }
+    "addressLabel": "Address",
+    "exportBtn": "Export keystore",
+    "exportDone": "Keystore exported.",
+    "exportCancelled": "Export cancelled."
+  },
+  "importBtn": "Import keystore",
+  "importDone": "Keystore imported. Please unlock with your password.",
+  "importCancelled": "Import cancelled.",
+  "importError": "Invalid keystore file.",
+  "city": "Chelyabinsk",
+  "devCredit": "Developed by RASSVET",
+  "titles": [
+    "Zarya — Dawn is near!",
+    "Zarya — Made with Love!",
+    "Zarya — Political Party RASSVET"
+  ]
 }

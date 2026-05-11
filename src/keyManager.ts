@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 
 // scrypt params: N=2^14 (~16 MB RAM per attempt), r=8, p=1
@@ -93,4 +93,50 @@ export function loadKey(password: string): string {
 
   const privateKey = `0x${plaintext.toString('hex')}` as `0x${string}`;
   return privateKeyToAccount(privateKey).address;
+}
+
+/**
+ * Opens a save dialog and writes the raw keystore JSON to the chosen file.
+ * Returns true on success, false if the user cancelled.
+ */
+export async function exportKey(): Promise<boolean> {
+  if (!hasKey()) throw new Error('No keystore found');
+
+  const { canceled, filePath: dest } = await dialog.showSaveDialog({
+    title: 'Export keystore',
+    defaultPath: 'zarya-keystore.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  });
+  if (canceled || !dest) return false;
+
+  fs.copyFileSync(keystorePath(), dest);
+  return true;
+}
+
+/**
+ * Opens an open dialog and replaces the current keystore with the chosen file.
+ * Returns true on success, false if the user cancelled.
+ * Throws if the chosen file is not a valid keystore structure.
+ */
+export async function importKey(): Promise<boolean> {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Import keystore',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    properties: ['openFile'],
+  });
+  if (canceled || filePaths.length === 0) return false;
+
+  const raw = fs.readFileSync(filePaths[0], 'utf-8');
+  const parsed = JSON.parse(raw) as Record<string, unknown>;
+  if (
+    typeof parsed.salt !== 'string' ||
+    typeof parsed.iv !== 'string' ||
+    typeof parsed.tag !== 'string' ||
+    typeof parsed.ciphertext !== 'string'
+  ) {
+    throw new Error('Invalid keystore file');
+  }
+
+  fs.writeFileSync(keystorePath(), raw, { mode: 0o600 });
+  return true;
 }

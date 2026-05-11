@@ -42,6 +42,8 @@
         </div>
         <button class="btn" id="unlock-btn">Unlock</button>
         <p id="unlock-error" class="unlock-form__error"></p>
+        <button class="btn btn--ghost" id="import-btn">Import keystore</button>
+        <p id="import-status" class="unlock-form__status"></p>
       </div>
 
       <!-- Shown after the key is unlocked / created -->
@@ -49,9 +51,16 @@
         <h2 class="wallet__title">Wallet</h2>
         <p class="wallet__label">Address</p>
         <code id="address" class="wallet__address"></code>
+        <div class="wallet__actions">
+          <button class="btn btn--outline" id="export-btn">Export keystore</button>
+        </div>
+        <p id="export-status" class="wallet__status"></p>
       </div>
 
     </div>
+    <footer class="app-footer">
+      <span id="app-city"></span> &middot; <span id="app-dev-credit"></span>
+    </footer>
     <script type="module" src="/src/renderer.ts"></script>
   </body>
 </html>

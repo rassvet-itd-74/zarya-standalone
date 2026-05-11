@@ -8,6 +8,8 @@ declare global {
       hasKey(): Promise<boolean>;
       createKey(password: string): Promise<string>;
       unlockKey(password: string): Promise<string>;
+      exportKey(): Promise<boolean>;
+      importKey(): Promise<boolean>;
     };
   }
 }
@@ -37,6 +39,10 @@ const unlockError    = document.getElementById('unlock-error')      as HTMLEleme
 const langToggle     = document.getElementById('lang-toggle')       as HTMLButtonElement;
 const appLogo        = document.getElementById('app-logo')          as HTMLImageElement;
 const themeCheckbox  = document.getElementById('theme-checkbox')    as HTMLInputElement;
+const exportBtn      = document.getElementById('export-btn')        as HTMLButtonElement;
+const exportStatus   = document.getElementById('export-status')     as HTMLElement;
+const importBtn      = document.getElementById('import-btn')        as HTMLButtonElement;
+const importStatus   = document.getElementById('import-status')     as HTMLElement;
 
 // --- Theme ---
 const savedTheme = (localStorage.getItem('theme') ?? 'light') as 'light' | 'dark';
@@ -48,6 +54,11 @@ themeCheckbox.addEventListener('change', () => {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
 });
+
+function applyRandomTitle() {
+  const idx = Math.floor(Math.random() * 3);
+  document.title = t(`titles.${idx}`);
+}
 
 // --- Translations ---
 function applyTranslations() {
@@ -63,8 +74,12 @@ function applyTranslations() {
 
   (document.querySelector('#wallet-view .wallet__title')          as HTMLElement).textContent = t('wallet.title');
   (document.querySelector('.wallet__label')                       as HTMLElement).textContent = t('wallet.addressLabel');
+  exportBtn.textContent = t('wallet.exportBtn');
+  importBtn.textContent = t('importBtn');
 
   langToggle.textContent = currentLang() === 'ru' ? 'EN' : 'RU';
+  (document.getElementById('app-city') as HTMLElement).textContent = t('city');
+  (document.getElementById('app-dev-credit') as HTMLElement).textContent = t('devCredit');
 }
 
 // --- Setup view ---
@@ -118,17 +133,47 @@ unlockBtn.addEventListener('click', async () => {
   }
 });
 
+// --- Export ---
+exportBtn.addEventListener('click', async () => {
+  exportStatus.textContent = '';
+  exportBtn.disabled = true;
+  try {
+    const saved = await window.electronAPI.exportKey();
+    exportStatus.textContent = saved ? t('wallet.exportDone') : t('wallet.exportCancelled');
+  } catch (e: unknown) {
+    exportStatus.textContent = e instanceof Error ? e.message : String(e);
+  } finally {
+    exportBtn.disabled = false;
+  }
+});
+
+// --- Import ---
+importBtn.addEventListener('click', async () => {
+  importStatus.textContent = '';
+  importBtn.disabled = true;
+  try {
+    const loaded = await window.electronAPI.importKey();
+    importStatus.textContent = loaded ? t('importDone') : t('importCancelled');
+  } catch (e: unknown) {
+    importStatus.textContent = e instanceof Error ? e.message : t('importError');
+  } finally {
+    importBtn.disabled = false;
+  }
+});
+
 // --- Lang toggle ---
 langToggle.addEventListener('click', async () => {
   const next = currentLang() === 'ru' ? 'en' : 'ru';
   await changeLang(next);
   applyTranslations();
+  applyRandomTitle();
 });
 
 // --- Init ---
 (async () => {
   await initI18n();
   applyTranslations();
+  applyRandomTitle();
   appLogo.src = logoRound;
   const exists = await window.electronAPI.hasKey();
   show(exists ? 'unlock-view' : 'setup-view');
