@@ -3,7 +3,7 @@
 > Десктопный кошелёк и клиент DAO для системы ДАВО «Заря» партии «Рассвет».  
 > Desktop wallet and DAO client for the DAIO "Zarya" system of the "RASSVET" party.
 
-`Версия: Челябинск` · `v1.0.0`
+`Версия: Челябинск`
 
 ---
 
