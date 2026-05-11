@@ -3,6 +3,8 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { hasKey, createKeyRaw, loadKeyRaw, exportKey, importKey } from './keyManager';
 import { readConfig, writeConfig, Config } from './configManager';
+import { readTags, writeTags, exportTags, importTags, resolveOrganTag } from './organTagsManager';
+import type { OrganTag } from './organTagsManager';
 import { createPublicClient, http } from 'viem';
 import {
   initPublicClient,
@@ -15,7 +17,7 @@ import {
   contractUnwatch,
   unwatchAll,
   getChainInfo,
-  getMemberships,
+  checkOrganMembership,
 } from './zaryaClient';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -143,6 +145,18 @@ ipcMain.handle('zarya:unwatch', (_event, eventName: string) =>
 
 ipcMain.handle('zarya:chain', () => getChainInfo());
 
-ipcMain.handle('zarya:membership', (_event, address: string) =>
-  getMemberships(address),
+ipcMain.handle('zarya:checkOrgan', (_event, organ: string, address: string) =>
+  checkOrganMembership(organ, address),
 );
+
+// --- Organ tags IPC ---
+
+ipcMain.handle('tags:read', () => readTags());
+
+ipcMain.handle('tags:write', (_event, tags: OrganTag[]) => writeTags(tags));
+
+ipcMain.handle('tags:export', () => exportTags());
+
+ipcMain.handle('tags:import', () => importTags());
+
+ipcMain.handle('tags:resolve', (_event, code: string) => resolveOrganTag(code));

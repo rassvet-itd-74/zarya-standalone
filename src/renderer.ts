@@ -24,8 +24,15 @@ declare global {
       watch(eventName: string): Promise<void>;
       unwatch(eventName: string): Promise<void>;
       chain(): Promise<{ blockNumber: string; chainId: number }>;
-      membership(address: string): Promise<string[]>;
+      checkOrgan(organCode: string, address: string): Promise<boolean>;
       onEvent(cb: (eventName: string, logs: unknown[]) => void): () => void;
+    };
+    tagsAPI: {
+      read(): Promise<Array<{ code: string; organ?: string }>>;
+      write(tags: Array<{ code: string; organ?: string }>): Promise<void>;
+      exportTags(): Promise<boolean>;
+      importTags(): Promise<Array<{ code: string; organ?: string }> | null>;
+      resolve(code: string): Promise<string | null>;
     };
   }
 }
@@ -42,8 +49,8 @@ function show(id: string) {
 let currentAddress = '';
 
 // Predefined deployment defaults
-const DEFAULT_CONTRACT_ADDRESS = '0x75BbACe4A6720636622F1a344B13c5DC193D06a4';
-const DEFAULT_CHAIN_ID = 111555111;
+const DEFAULT_CONTRACT_ADDRESS = '0x141EB27110329C82De3C95045C96f6eBF15fDc4b';
+const DEFAULT_CHAIN_ID = 11155111;
 
 async function afterUnlock(address: string) {
   currentAddress = address;
@@ -77,20 +84,74 @@ async function countActiveVotings(): Promise<number> {
   }).length;
 }
 
+async function renderOrganTags() {
+  const organsEl = document.getElementById('dashboard-organs') as HTMLElement;
+  if (!organsEl) return;
+
+  const tags = await window.tagsAPI.read();
+
+  if (tags.length === 0) {
+    organsEl.innerHTML = `<span class="dashboard__organ-none">${t('organs.noTags')}</span>`;
+    return;
+  }
+
+  // Render all tags immediately; unresolved ones get a special style
+  organsEl.innerHTML = tags
+    .map(
+      (tag, i) => {
+        const display = tag.code;
+        const resolved = !!tag.organ;
+        return (
+          `<span class="dashboard__organ-tag ${resolved ? 'dashboard__organ-tag--pending' : 'dashboard__organ-tag--unresolved'}" data-index="${i}" title="${tag.organ ?? t('organs.unresolved')}">` +
+          `<span class="dashboard__organ-dot"></span>` +
+          `<span>${display}</span>` +
+          `<button class="dashboard__organ-remove" data-index="${i}" aria-label="${t('organs.remove')}">×</button>` +
+          `</span>`
+        );
+      },
+    )
+    .join('');
+
+  // Attach remove handlers
+  organsEl.querySelectorAll<HTMLButtonElement>('.dashboard__organ-remove').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.index!);
+      const current = await window.tagsAPI.read();
+      await window.tagsAPI.write(current.filter((_, i) => i !== idx));
+      renderOrganTags();
+    });
+  });
+
+  // Check membership for tags that have a resolved bytes32 organ code
+  if (currentAddress) {
+    tags.forEach((tag, i) => {
+      if (!tag.organ) return; // unresolved — nothing to check
+      window.zaryaAPI.checkOrgan(tag.organ, currentAddress).then(isMember => {
+        console.log(`[organs] checkOrgan("${tag.code}", ${currentAddress}) →`, isMember);
+        const tagEl = organsEl.querySelector<HTMLElement>(`[data-index="${i}"]`);
+        if (!tagEl) return;
+        tagEl.classList.remove('dashboard__organ-tag--pending');
+        tagEl.classList.add(
+          isMember ? 'dashboard__organ-tag--member' : 'dashboard__organ-tag--unknown',
+        );
+      });
+    });
+  }
+}
+
 async function showDashboard(address: string) {
   // Render skeleton immediately
   (document.getElementById('dashboard-address') as HTMLElement).textContent = address;
   (document.getElementById('dashboard-chain-id') as HTMLElement).textContent = '';
   (document.getElementById('dashboard-block') as HTMLElement).textContent = '';
-  (document.getElementById('dashboard-organs') as HTMLElement).innerHTML =
-    `<span class="dashboard__organ-none">${t('dashboard.loading')}</span>`;
+  (document.getElementById('dashboard-organs') as HTMLElement).innerHTML = '';
   (document.getElementById('dashboard-votings-count') as HTMLElement).textContent = '…';
   show('dashboard-view');
 
-  // Load data in parallel; failures are tolerated
-  const [chainResult, organsResult, votingsResult] = await Promise.allSettled([
+  // Fast queries — chain info + votings count resolve together
+  const [chainResult, votingsResult] = await Promise.allSettled([
     window.zaryaAPI.chain(),
-    window.zaryaAPI.membership(address),
     countActiveVotings(),
   ]);
 
@@ -104,17 +165,11 @@ async function showDashboard(address: string) {
       t('dashboard.offline');
   }
 
-  const organsEl = document.getElementById('dashboard-organs') as HTMLElement;
-  if (organsResult.status === 'fulfilled' && organsResult.value.length > 0) {
-    organsEl.innerHTML = organsResult.value
-      .map(id => `<span class="dashboard__organ-tag">${id}</span>`)
-      .join('');
-  } else {
-    organsEl.innerHTML = `<span class="dashboard__organ-none">${t('dashboard.noOrgans')}</span>`;
-  }
-
   (document.getElementById('dashboard-votings-count') as HTMLElement).textContent =
     votingsResult.status === 'fulfilled' ? String(votingsResult.value) : '?';
+
+  // Render organ tags asynchronously — non-blocking
+  renderOrganTags();
 }
 
 // --- DOM refs ---
@@ -144,6 +199,10 @@ const dashMatrixBtn   = document.getElementById('dash-matrix-btn')   as HTMLButt
 const dashSettingsBtn = document.getElementById('dash-settings-btn') as HTMLButtonElement;
 const dashWalletBtn   = document.getElementById('dash-wallet-btn')   as HTMLButtonElement;
 const walletBackBtn   = document.getElementById('wallet-back-btn')   as HTMLButtonElement;
+const organCodeInput  = document.getElementById('organ-code-input')  as HTMLInputElement;
+const dashOrganAddBtn      = document.getElementById('dash-organ-add-btn')   as HTMLButtonElement;
+const dashOrgansExportBtn  = document.getElementById('dash-organs-export')   as HTMLButtonElement;
+const dashOrgansImportBtn  = document.getElementById('dash-organs-import')   as HTMLButtonElement;
 
 // --- Theme ---
 const savedTheme = (localStorage.getItem('theme') ?? 'light') as 'light' | 'dark';
@@ -195,6 +254,10 @@ function applyTranslations() {
   dashSettingsBtn.textContent = t('dashboard.settingsBtn');
   dashWalletBtn.textContent   = t('dashboard.walletBtn');
   walletBackBtn.textContent   = t('dashboard.backBtn');
+
+  dashOrgansExportBtn.title       = t('organs.exportTitle');
+  dashOrgansImportBtn.title       = t('organs.importTitle');
+  organCodeInput.placeholder      = t('organs.codePlaceholder');
 
   langToggle.textContent = currentLang() === 'ru' ? 'EN' : 'RU';
   (document.getElementById('app-city') as HTMLElement).textContent = t('city');
@@ -367,6 +430,46 @@ dashVotingsBtn.addEventListener('click', () => {
 
 dashMatrixBtn.addEventListener('click', () => {
   // Phase 5 — placeholder
+});
+
+// --- Organ tags ---
+dashOrganAddBtn.addEventListener('click', async () => {
+  const code = organCodeInput.value.trim();
+  if (!code) return;
+  const tags = await window.tagsAPI.read();
+  if (tags.some(tag => tag.code.toUpperCase() === code.toUpperCase())) return; // deduplicate
+
+  // Add immediately as unresolved, then resolve in background
+  const newTag: { code: string; organ?: string } = { code };
+  tags.push(newTag);
+  await window.tagsAPI.write(tags);
+  organCodeInput.value = '';
+  renderOrganTags();
+
+  // Resolve the bytes32 in background and persist it
+  window.tagsAPI.resolve(code).then(async organ => {
+    console.log(`[organs] resolve("${code}") →`, organ);
+    if (!organ) return;
+    const current = await window.tagsAPI.read();
+    const target = current.find(t => t.code.toUpperCase() === code.toUpperCase());
+    if (target) {
+      target.organ = organ;
+      await window.tagsAPI.write(current);
+      renderOrganTags();
+    }
+  });
+});
+
+organCodeInput.addEventListener('keydown', e => { if (e.key === 'Enter') dashOrganAddBtn.click(); });
+
+dashOrgansExportBtn.addEventListener('click', () => window.tagsAPI.exportTags());
+
+dashOrgansImportBtn.addEventListener('click', async () => {
+  const imported = await window.tagsAPI.importTags();
+  if (imported) {
+    await window.tagsAPI.write(imported);
+    renderOrganTags();
+  }
 });
 
 walletBackBtn.addEventListener('click', async () => {

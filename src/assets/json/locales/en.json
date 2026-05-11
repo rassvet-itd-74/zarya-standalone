@@ -57,6 +57,14 @@
   "importDone": "Keystore imported. Please unlock with your password.",
   "importCancelled": "Import cancelled.",
   "importError": "Invalid keystore file.",
+  "organs": {
+    "noTags": "No organ tags saved",
+    "unresolved": "Code not found on chain — membership cannot be checked",
+    "codePlaceholder": "74.\u0421\u041e\u0412",
+    "exportTitle": "Export organ tags",
+    "importTitle": "Import organ tags",
+    "remove": "Remove"
+  },
   "city": "Chelyabinsk",
   "devCredit": "Developed by RASSVET",
   "titles": [

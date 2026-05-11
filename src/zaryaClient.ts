@@ -189,57 +189,20 @@ export async function getChainInfo(): Promise<{ blockNumber: string; chainId: nu
 }
 
 /**
- * Discovers which party organs the given address belongs to by enumerating
- * (organType × region × number) triples and batch-checking isMember.
- * All calls are read-only view/pure calls — no gas required.
+ * Checks whether the given address is a member of the organ identified by its
+ * bytes32 organ code. Read-only — no gas required.
  */
-export async function getMemberships(
+export async function checkOrganMembership(
+  organCode: string,
   address: string,
-  maxOrganType = 5,
-  maxRegion = 3,
-  maxNumber = 2,
-): Promise<string[]> {
-  const client = getPublic();
-  const contractAddress = currentConfig!.contractAddress as `0x${string}`;
-  const abi = zaryaAbi as Abi;
-
-  // Build all (organType, region, number) triples
-  const combos: [number, number, bigint][] = [];
-  for (let ot = 0; ot < maxOrganType; ot++)
-    for (let r = 0; r < maxRegion; r++)
-      for (let n = 0n; n < BigInt(maxNumber); n++)
-        combos.push([ot, r, n]);
-
-  // Compute organ bytes32 for each combo (pure — no state access)
-  const organs = await Promise.all(
-    combos.map(([ot, r, n]) =>
-      client
-        .readContract({ address: contractAddress, abi, functionName: 'getPartyOrgan', args: [ot, r, n] })
-        .catch(() => null),
-    ),
-  );
-
-  // Check isMember in parallel
-  const memberChecks = await Promise.all(
-    organs.map(organ =>
-      organ != null
-        ? client
-            .readContract({ address: contractAddress, abi, functionName: 'isMember', args: [organ, address] })
-            .catch(() => false)
-        : false,
-    ),
-  );
-
-  // Fetch human-readable identifiers for positive matches only
-  const identifiers = await Promise.all(
-    combos.map(async ([ot, r, n], i) => {
-      if (!memberChecks[i]) return null;
-      return client
-        .readContract({ address: contractAddress, abi, functionName: 'getPartyOrganIdentifier', args: [ot, r, n] })
-        .then(v => String(v))
-        .catch(() => null);
-    }),
-  );
-
-  return identifiers.filter((id): id is string => id !== null);
+): Promise<boolean> {
+  return getPublic()
+    .readContract({
+      address: currentConfig!.contractAddress as `0x${string}`,
+      abi: zaryaAbi as Abi,
+      functionName: 'isMember',
+      args: [organCode as `0x${string}`, address as `0x${string}`],
+    })
+    .then(v => Boolean(v))
+    .catch(() => false);
 }

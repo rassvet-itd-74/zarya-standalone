@@ -71,8 +71,19 @@
         </div>
         <p id="dashboard-block" class="dashboard__muted"></p>
         <div class="dashboard__section">
-          <span class="dashboard__label" id="dash-organs-label">Organs</span>
+          <div class="dashboard__organs-header">
+            <span class="dashboard__label" id="dash-organs-label">Organs</span>
+            <div class="dashboard__organs-actions">
+              <button class="btn btn--ghost btn--xs" id="dash-organs-export">&#8593;</button>
+              <button class="btn btn--ghost btn--xs" id="dash-organs-import">&#8595;</button>
+            </div>
+          </div>
           <div id="dashboard-organs" class="dashboard__organs"></div>
+          <div class="dashboard__organs-add">
+            <input class="field__input field__input--sm" type="text" id="organ-code-input"
+              spellcheck="false" autocomplete="off" />
+            <button class="btn btn--sm" id="dash-organ-add-btn">+</button>
+          </div>
         </div>
         <div class="dashboard__section dashboard__section--row">
           <span class="dashboard__label" id="dash-votings-label">Active Votings</span>

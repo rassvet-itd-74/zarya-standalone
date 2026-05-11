@@ -44,8 +44,8 @@ contextBridge.exposeInMainWorld('zaryaAPI', {
   chain: (): Promise<{ blockNumber: string; chainId: number }> =>
     ipcRenderer.invoke('zarya:chain'),
 
-  membership: (address: string): Promise<string[]> =>
-    ipcRenderer.invoke('zarya:membership', address),
+  checkOrgan: (organCode: string, address: string): Promise<boolean> =>
+    ipcRenderer.invoke('zarya:checkOrgan', organCode, address),
 
   /**
    * Subscribe to events pushed by the main process via watchContractEvent.
@@ -62,4 +62,21 @@ contextBridge.exposeInMainWorld('zaryaAPI', {
     ipcRenderer.on('zarya:event', handler);
     return () => ipcRenderer.removeListener('zarya:event', handler);
   },
+});
+
+contextBridge.exposeInMainWorld('tagsAPI', {
+  read: (): Promise<Array<{ code: string; organ?: string }>> =>
+    ipcRenderer.invoke('tags:read'),
+
+  write: (tags: Array<{ code: string; organ?: string }>): Promise<void> =>
+    ipcRenderer.invoke('tags:write', tags),
+
+  exportTags: (): Promise<boolean> =>
+    ipcRenderer.invoke('tags:export'),
+
+  importTags: (): Promise<Array<{ code: string; organ?: string }> | null> =>
+    ipcRenderer.invoke('tags:import'),
+
+  resolve: (code: string): Promise<string | null> =>
+    ipcRenderer.invoke('tags:resolve', code),
 });
