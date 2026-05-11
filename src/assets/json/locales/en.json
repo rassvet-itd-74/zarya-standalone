@@ -1,0 +1,23 @@
+{
+  "setup": {
+    "title": "Create wallet",
+    "description": "Choose a password to encrypt your private key. It cannot be recovered if lost.",
+    "passwordLabel": "Password",
+    "confirmLabel": "Confirm password",
+    "generateBtn": "Generate key",
+    "generating": "Generating…",
+    "errorRequired": "Password is required.",
+    "errorMismatch": "Passwords do not match."
+  },
+  "unlock": {
+    "title": "Unlock wallet",
+    "passwordLabel": "Password",
+    "unlockBtn": "Unlock",
+    "unlocking": "Unlocking…",
+    "errorRequired": "Password is required."
+  },
+  "wallet": {
+    "title": "Wallet",
+    "addressLabel": "Address"
+  }
+}

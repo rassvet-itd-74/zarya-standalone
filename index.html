@@ -1,13 +1,57 @@
 <!doctype html>
-<html>
+<html data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
-
+    <title>Zarya</title>
+    <link rel="icon" href="/src/assets/icons/favicon.ico" />
   </head>
   <body>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
+    <!-- Theme toggle slider (Tailwind utilities for layout, SCSS for mechanism) -->
+    <label for="theme-checkbox" class="fixed top-4 left-4 flex cursor-pointer items-center gap-1.5 text-sm select-none opacity-60 hover:opacity-100 transition-opacity">
+      <input type="checkbox" id="theme-checkbox" class="theme-toggle__input" />
+      <span class="theme-toggle__track">
+        <span class="theme-toggle__thumb"></span>
+      </span>
+    </label>
+    <button id="lang-toggle" class="lang-toggle">EN</button>
+    <div id="app">
+      <img id="app-logo" class="app-logo" src="" alt="Zarya" />
+
+      <!-- Shown when no keystore exists yet -->
+      <div id="setup-view" class="view setup-form" style="display:none">
+        <h2 class="setup-form__title">Create wallet</h2>
+        <p class="setup-form__description">Choose a password to encrypt your private key. It cannot be recovered if lost.</p>
+        <div class="field">
+          <label class="field__label" for="create-password">Password</label>
+          <input class="field__input" type="password" id="create-password" autocomplete="new-password" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="create-confirm">Confirm password</label>
+          <input class="field__input" type="password" id="create-confirm" autocomplete="new-password" />
+        </div>
+        <button class="btn" id="create-btn">Generate key</button>
+        <p id="create-error" class="setup-form__error"></p>
+      </div>
+
+      <!-- Shown when a keystore already exists -->
+      <div id="unlock-view" class="view unlock-form" style="display:none">
+        <h2 class="unlock-form__title">Unlock wallet</h2>
+        <div class="field">
+          <label class="field__label" for="unlock-password">Password</label>
+          <input class="field__input" type="password" id="unlock-password" autocomplete="current-password" />
+        </div>
+        <button class="btn" id="unlock-btn">Unlock</button>
+        <p id="unlock-error" class="unlock-form__error"></p>
+      </div>
+
+      <!-- Shown after the key is unlocked / created -->
+      <div id="wallet-view" class="view wallet" style="display:none">
+        <h2 class="wallet__title">Wallet</h2>
+        <p class="wallet__label">Address</p>
+        <code id="address" class="wallet__address"></code>
+      </div>
+
+    </div>
     <script type="module" src="/src/renderer.ts"></script>
   </body>
 </html>

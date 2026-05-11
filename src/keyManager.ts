@@ -1,0 +1,96 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { app } from 'electron';
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
+
+// scrypt params: N=2^14 (~16 MB RAM per attempt), r=8, p=1
+// N=2^15 hits Electron's OpenSSL 32 MB memory ceiling exactly and fails
+const SCRYPT_N = 16384;
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+
+function keystorePath(): string {
+  return path.join(app.getPath('userData'), 'keystore.json');
+}
+
+interface Keystore {
+  salt: string;
+  iv: string;
+  tag: string;
+  ciphertext: string;
+}
+
+function deriveKey(password: string, salt: Buffer): Buffer {
+  return crypto.scryptSync(password, salt, 32, {
+    N: SCRYPT_N,
+    r: SCRYPT_R,
+    p: SCRYPT_P,
+  });
+}
+
+export function hasKey(): boolean {
+  return fs.existsSync(keystorePath());
+}
+
+/**
+ * Generates a new private key, encrypts it with the given password,
+ * persists it to disk, and returns the corresponding address.
+ * Throws if a key already exists.
+ */
+export function createKey(password: string): string {
+  if (hasKey()) throw new Error('Key already exists');
+
+  const privateKey = generatePrivateKey();
+  const salt = crypto.randomBytes(32);
+  const iv = crypto.randomBytes(12);
+  const derivedKey = deriveKey(password, salt);
+
+  const cipher = crypto.createCipheriv('aes-256-gcm', derivedKey, iv);
+  // strip 0x prefix before encrypting raw bytes
+  const plaintext = Buffer.from(privateKey.slice(2), 'hex');
+  const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  const keystore: Keystore = {
+    salt: salt.toString('hex'),
+    iv: iv.toString('hex'),
+    tag: tag.toString('hex'),
+    ciphertext: ciphertext.toString('hex'),
+  };
+
+  fs.writeFileSync(keystorePath(), JSON.stringify(keystore), { mode: 0o600 });
+
+  return privateKeyToAccount(privateKey).address;
+}
+
+/**
+ * Decrypts the persisted private key with the given password and returns
+ * the corresponding address. Throws on wrong password or missing keystore.
+ */
+export function loadKey(password: string): string {
+  if (!hasKey()) throw new Error('No keystore found');
+
+  const keystore: Keystore = JSON.parse(
+    fs.readFileSync(keystorePath(), 'utf-8'),
+  );
+
+  const salt = Buffer.from(keystore.salt, 'hex');
+  const iv = Buffer.from(keystore.iv, 'hex');
+  const tag = Buffer.from(keystore.tag, 'hex');
+  const ciphertext = Buffer.from(keystore.ciphertext, 'hex');
+  const derivedKey = deriveKey(password, salt);
+
+  const decipher = crypto.createDecipheriv('aes-256-gcm', derivedKey, iv);
+  decipher.setAuthTag(tag);
+
+  let plaintext: Buffer;
+  try {
+    plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  } catch {
+    throw new Error('Invalid password');
+  }
+
+  const privateKey = `0x${plaintext.toString('hex')}` as `0x${string}`;
+  return privateKeyToAccount(privateKey).address;
+}
