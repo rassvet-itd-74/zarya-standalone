@@ -23,6 +23,21 @@
     "exportDone": "Keystore exported.",
     "exportCancelled": "Export cancelled."
   },
+  "settings": {
+    "openBtn": "Settings",
+    "title": "Network Settings",
+    "contractAddressLabel": "Contract Address",
+    "chainIdLabel": "Chain ID",
+    "testBtn": "Test Connection",
+    "saveBtn": "Save",
+    "backBtn": "\u2190 Back",
+    "testing": "Testing connection\u2026",
+    "testSuccess": "Connection successful. Chain ID auto-filled.",
+    "testFail": "Connection failed.",
+    "saved": "Settings saved.",
+    "errorInvalidAddress": "Enter a valid contract address (0x\u2026).",
+    "errorInvalidChainId": "Enter a valid chain ID."
+  },
   "importBtn": "Import keystore",
   "importDone": "Keystore imported. Please unlock with your password.",
   "importCancelled": "Import cancelled.",

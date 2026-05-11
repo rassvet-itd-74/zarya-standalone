@@ -116,6 +116,10 @@ zaryaAPI: {
   read(fn, args): Promise<unknown>
   write(fn, args): Promise<`0x${string}`>
   waitTx(hash): Promise<TransactionReceipt>
+  getLogs(event, fromBlock?): Promise<Log[]>
+  watch(eventName: string): void
+  unwatch(eventName: string): void
+  onEvent(cb: (eventName: string, log: unknown) => void): () => void  // returns unsub
 }
 configAPI: {
   read(): Promise<Config | null>
@@ -152,25 +156,87 @@ Dashboard
 
 > Goal: view and participate in DAO votings.
 
-### 4.1 Votings list view
+### 4.1 Discovering votings — initial query + live subscription
 
-- Fetches `nextVotingId` → iterates `getVotingResults(id)` for all IDs
-- Two tabs: **Active** (`isVotingActive`) | **Past** (`isVotingFinalized`)
-- Each row: voting type, organ identifier, deadline countdown, for/against counts
+**Stage 1 — Initial load (on view mount)**
+
+One `getLogs` sweep from block 0 covers all historical events:
+
+```ts
+const createdLogs   = await publicClient.getLogs({ event: VotingCreated,   fromBlock: 0n })
+const finalizedLogs = await publicClient.getLogs({ event: VotingFinalized, fromBlock: 0n })
+```
+
+Extract IDs, classify active vs past client-side, then `Promise.all` the `getVotingResults` reads for the visible set.
+
+**Stage 2 — Live subscription (after initial load)**
+
+viem's `watchContractEvent` opens a persistent subscription (poll or WebSocket depending on transport):
+
+```ts
+const unwatchCreated = publicClient.watchContractEvent({
+  address: contractAddress,
+  abi: zaryaAbi,
+  eventName: 'VotingCreated',
+  onLogs: (logs) => addVotings(logs),
+})
+
+const unwatchFinalized = publicClient.watchContractEvent({
+  address: contractAddress,
+  abi: zaryaAbi,
+  eventName: 'VotingFinalized',
+  onLogs: (logs) => markFinalized(logs),
+})
+
+const unwatchVoteCasted = publicClient.watchContractEvent({
+  address: contractAddress,
+  abi: zaryaAbi,
+  eventName: 'VoteCasted',
+  onLogs: (logs) => updateVoteCounts(logs),
+})
+```
+
+Subscriptions are torn down (`unwatchCreated()` etc.) when the Votings view is hidden or the app quits.
+The unwatch callbacks are kept in `zaryaClient.ts` and triggered via a `zarya:unwatch` IPC channel.
+
+Events are pushed to the renderer via `mainWindow.webContents.send('zarya:event', { eventName, log })`.
+
+**IPC additions for subscriptions**
+
+| Channel | Direction | Args | Description |
+|---|---|---|---|
+| `zarya:watch` | renderer → main | `{ eventName }` | Start `watchContractEvent` |
+| `zarya:unwatch` | renderer → main | `{ eventName }` | Tear down subscription |
+| `zarya:event` | main → renderer | `{ eventName, log }` | Pushed on each new event |
+
+### 4.2 Votings list view
+
+- Fetch all `VotingCreated` logs → extract IDs + deadlines + initiators
+- Fetch all `VotingFinalized` logs → mark finalized IDs
+- Classify: **Active** = not finalized AND `block.timestamp < deadline` | **Past** = finalized OR expired
+- Two tabs: **Active** | **Past**
+- Each row: voting type, organ identifier (from `getVotingResults`), deadline countdown, for/against counts
 - [Cast Vote] button — shown only if:
   - voting is active
   - user is a member of the organ
   - user hasn't voted yet (`hasVoted`)
 
-### 4.2 Cast vote
+### 4.3 Additional IPC channel
+
+| Channel | Args | Returns |
+|---|---|---|
+| `zarya:getLogs` | `{ event, fromBlock? }` | decoded log array |
+
+### 4.4 Cast vote
 
 - Confirm dialog (for / against toggle)
 - Calls `zarya:write` → `castVote(votingId, support, organ)`
 - Shows tx hash + waits for receipt
+- Refetches voting row after confirmation
 
-### 4.3 Execute voting
+### 4.5 Execute voting
 
-- Shown on past, non-finalized votings
+- Shown on expired, non-finalized votings
 - Input fields: minimum quorum, minimum approval %
 - Calls `zarya:write` → `executeVoting(votingId, quorum, approval%)`
 

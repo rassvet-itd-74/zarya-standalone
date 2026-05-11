@@ -53,8 +53,28 @@
         <code id="address" class="wallet__address"></code>
         <div class="wallet__actions">
           <button class="btn btn--outline" id="export-btn">Export keystore</button>
+          <button class="btn btn--ghost" id="settings-open-btn">Settings</button>
         </div>
         <p id="export-status" class="wallet__status"></p>
+      </div>
+
+      <!-- Network / DAO settings -->
+      <div id="settings-view" class="view settings-form" style="display:none">
+        <h2 class="settings-form__title">Network Settings</h2>
+        <div class="field">
+          <label class="field__label" for="contract-address">Contract Address</label>
+          <input class="field__input" type="text" id="contract-address" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="chain-id">Chain ID</label>
+          <input class="field__input" type="number" id="chain-id" min="1" />
+        </div>
+        <div class="settings-form__actions">
+          <button class="btn btn--ghost" id="settings-test-btn">Test Connection</button>
+          <button class="btn" id="settings-save-btn">Save</button>
+        </div>
+        <p id="settings-status" class="settings-form__status"></p>
+        <button class="btn btn--ghost settings-form__back" id="settings-back-btn">&#8592; Back</button>
       </div>
 
     </div>

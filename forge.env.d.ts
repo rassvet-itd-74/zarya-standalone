@@ -1,5 +1,8 @@
 /// <reference types="@electron-forge/plugin-vite/forge-vite-env" />
 
+// Build-time constant injected by vite.main.config.ts via define
+declare const __RPC_URL__: string;
+
 declare module '*.css' {
   const content: Record<string, string>;
   export default content;

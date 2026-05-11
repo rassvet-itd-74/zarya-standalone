@@ -12,3 +12,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportKey: (): Promise<boolean> => ipcRenderer.invoke('key:export'),
   importKey: (): Promise<boolean> => ipcRenderer.invoke('key:import'),
 });
+
+contextBridge.exposeInMainWorld('configAPI', {
+  read: (): Promise<{ contractAddress: string; chainId: number } | null> =>
+    ipcRenderer.invoke('config:read'),
+  write: (config: { contractAddress: string; chainId: number }): Promise<void> =>
+    ipcRenderer.invoke('config:write', config),
+  test: (): Promise<number> =>
+    ipcRenderer.invoke('config:test'),
+});

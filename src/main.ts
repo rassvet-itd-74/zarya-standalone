@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { hasKey, createKey, loadKey, exportKey, importKey } from './keyManager';
+import { readConfig, writeConfig, Config } from './configManager';
+import { createPublicClient, http } from 'viem';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -67,3 +69,13 @@ ipcMain.handle('key:unlock', (_event, password: string) => loadKey(password));
 ipcMain.handle('key:export', () => exportKey());
 
 ipcMain.handle('key:import', () => importKey());
+
+ipcMain.handle('config:read', () => readConfig());
+
+ipcMain.handle('config:write', (_event, config: Config) => writeConfig(config));
+
+ipcMain.handle('config:test', async () => {
+  if (!__RPC_URL__) throw new Error('RPC URL not configured');
+  const client = createPublicClient({ transport: http(__RPC_URL__) });
+  return await client.getChainId();
+});

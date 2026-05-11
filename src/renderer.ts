@@ -11,6 +11,11 @@ declare global {
       exportKey(): Promise<boolean>;
       importKey(): Promise<boolean>;
     };
+    configAPI: {
+      read(): Promise<{ contractAddress: string; chainId: number } | null>;
+      write(config: { contractAddress: string; chainId: number }): Promise<void>;
+      test(): Promise<number>;
+    };
   }
 }
 
@@ -43,6 +48,13 @@ const exportBtn      = document.getElementById('export-btn')        as HTMLButto
 const exportStatus   = document.getElementById('export-status')     as HTMLElement;
 const importBtn      = document.getElementById('import-btn')        as HTMLButtonElement;
 const importStatus   = document.getElementById('import-status')     as HTMLElement;
+const settingsOpenBtn  = document.getElementById('settings-open-btn')  as HTMLButtonElement;
+const settingsTestBtn  = document.getElementById('settings-test-btn')  as HTMLButtonElement;
+const settingsSaveBtn  = document.getElementById('settings-save-btn')  as HTMLButtonElement;
+const settingsBackBtn  = document.getElementById('settings-back-btn')  as HTMLButtonElement;
+const settingsStatus   = document.getElementById('settings-status')    as HTMLElement;
+const contractAddressInput = document.getElementById('contract-address') as HTMLInputElement;
+const chainIdInput         = document.getElementById('chain-id')         as HTMLInputElement;
 
 // --- Theme ---
 const savedTheme = (localStorage.getItem('theme') ?? 'light') as 'light' | 'dark';
@@ -76,6 +88,14 @@ function applyTranslations() {
   (document.querySelector('.wallet__label')                       as HTMLElement).textContent = t('wallet.addressLabel');
   exportBtn.textContent = t('wallet.exportBtn');
   importBtn.textContent = t('importBtn');
+  settingsOpenBtn.textContent = t('settings.openBtn');
+
+  (document.querySelector('#settings-view .settings-form__title') as HTMLElement).textContent = t('settings.title');
+  (document.querySelector('label[for="contract-address"]')        as HTMLElement).textContent = t('settings.contractAddressLabel');
+  (document.querySelector('label[for="chain-id"]')                as HTMLElement).textContent = t('settings.chainIdLabel');
+  settingsTestBtn.textContent = t('settings.testBtn');
+  settingsSaveBtn.textContent = t('settings.saveBtn');
+  settingsBackBtn.textContent = t('settings.backBtn');
 
   langToggle.textContent = currentLang() === 'ru' ? 'EN' : 'RU';
   (document.getElementById('app-city') as HTMLElement).textContent = t('city');
@@ -158,6 +178,58 @@ importBtn.addEventListener('click', async () => {
     importStatus.textContent = e instanceof Error ? e.message : t('importError');
   } finally {
     importBtn.disabled = false;
+  }
+});
+
+// --- Settings ---
+settingsOpenBtn.addEventListener('click', async () => {
+  settingsStatus.textContent = '';
+  const config = await window.configAPI.read();
+  if (config) {
+    contractAddressInput.value = config.contractAddress;
+    chainIdInput.value = String(config.chainId);
+  }
+  show('settings-view');
+});
+
+settingsBackBtn.addEventListener('click', () => {
+  show('wallet-view');
+});
+
+settingsTestBtn.addEventListener('click', async () => {
+  settingsStatus.textContent = t('settings.testing');
+  settingsTestBtn.disabled = true;
+  try {
+    const chainId = await window.configAPI.test();
+    chainIdInput.value = String(chainId);
+    settingsStatus.textContent = t('settings.testSuccess');
+  } catch (e: unknown) {
+    settingsStatus.textContent = e instanceof Error ? e.message : t('settings.testFail');
+  } finally {
+    settingsTestBtn.disabled = false;
+  }
+});
+
+settingsSaveBtn.addEventListener('click', async () => {
+  const contractAddress = contractAddressInput.value.trim();
+  const chainId = parseInt(chainIdInput.value, 10);
+  if (!contractAddress || !/^0x[0-9a-fA-F]{40}$/.test(contractAddress)) {
+    settingsStatus.textContent = t('settings.errorInvalidAddress');
+    return;
+  }
+  if (!chainId || chainId < 1) {
+    settingsStatus.textContent = t('settings.errorInvalidChainId');
+    return;
+  }
+  settingsSaveBtn.disabled = true;
+  try {
+    await window.configAPI.write({ contractAddress, chainId });
+    settingsStatus.textContent = t('settings.saved');
+    setTimeout(() => show('wallet-view'), 800);
+  } catch (e: unknown) {
+    settingsStatus.textContent = e instanceof Error ? e.message : String(e);
+  } finally {
+    settingsSaveBtn.disabled = false;
   }
 });
 
