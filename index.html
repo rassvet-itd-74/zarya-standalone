@@ -69,6 +69,10 @@
           <span class="dashboard__label" id="dash-address-label">Address</span>
           <code id="dashboard-address" class="dashboard__address"></code>
         </div>
+        <div class="dashboard__address-block">
+          <span class="dashboard__label" id="dash-balance-label">Balance</span>
+          <span id="dashboard-balance" class="dashboard__balance">…</span>
+        </div>
         <p id="dashboard-block" class="dashboard__muted"></p>
         <div class="dashboard__section">
           <div class="dashboard__organs-header">
@@ -102,7 +106,10 @@
         <div class="votings__header">
           <button class="btn btn--ghost btn--sm" id="votings-back-btn">← Back</button>
           <h2 class="votings__title" id="votings-title">Votings</h2>
-          <button class="btn btn--ghost btn--sm" id="votings-refresh-btn">⟳</button>
+          <div class="votings__header-actions">
+            <button class="btn btn--sm" id="votings-create-btn">+ Create</button>
+            <button class="btn btn--ghost btn--sm" id="votings-refresh-btn">⟳</button>
+          </div>
         </div>
         <div class="votings__tabs" role="tablist">
           <button class="votings__tab votings__tab--active" id="votings-tab-active" role="tab">Active</button>
@@ -153,6 +160,116 @@
         <div class="cell-detail__actions">
           <button class="btn btn--sm btn--outline" id="cell-load-more-btn" style="display:none">Load more</button>
           <button class="btn btn--sm" id="cell-propose-btn">Propose Value</button>
+        </div>
+      </div>
+
+      <!-- Create voting -->
+      <div id="create-voting-view" class="view create-voting" style="display:none">
+        <div class="create-voting__header">
+          <button class="btn btn--ghost btn--sm" id="cv-back-btn">← Back</button>
+          <h2 class="create-voting__title" id="cv-title">Create Voting</h2>
+        </div>
+
+        <!-- Step 1: voting type -->
+        <div id="cv-step-type" class="cv-step">
+          <p class="cv-step__label" id="cv-type-label">Voting type</p>
+          <div id="cv-type-list" class="cv-type-list"></div>
+        </div>
+
+        <!-- Step 2: organ (hidden for Theme/Statement) -->
+        <div id="cv-step-organ" class="cv-step" style="display:none">
+          <p class="cv-step__label" id="cv-organ-label">Organ</p>
+          <div class="cv-organ-picker">
+            <select class="field__input field__input--sm" id="cv-organ-type-sel"></select>
+            <select class="field__input field__input--sm" id="cv-organ-region-sel"></select>
+            <input  class="field__input field__input--sm" type="number" min="0" id="cv-organ-number" value="0" />
+            <button class="btn btn--sm btn--outline" id="cv-organ-resolve-btn"></button>
+          </div>
+          <p id="cv-organ-resolved" class="cv-organ-resolved"></p>
+        </div>
+
+        <!-- Step 3: contextual fields -->
+        <div id="cv-step-fields" class="cv-step" style="display:none">
+
+          <!-- isCategorical (Theme / Statement only) -->
+          <div id="cv-field-is-categorical" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-is-categorical">Matrix type</label>
+            <label class="cv-toggle">
+              <input type="checkbox" id="cv-is-categorical" />
+              <span id="cv-is-categorical-label"></span>
+            </label>
+          </div>
+
+          <!-- x coordinate -->
+          <div id="cv-field-x" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-x">Theme (x)</label>
+            <input class="field__input field__input--sm" type="number" min="0" id="cv-x" value="0" />
+          </div>
+
+          <!-- y coordinate -->
+          <div id="cv-field-y" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-y">Statement (y)</label>
+            <input class="field__input field__input--sm" type="number" min="0" id="cv-y" value="0" />
+          </div>
+
+          <!-- numerical/categorical value -->
+          <div id="cv-field-value" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-value">Value</label>
+            <input class="field__input field__input--sm" type="number" min="0" id="cv-value" value="0" />
+          </div>
+
+          <!-- value author -->
+          <div id="cv-field-value-author" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-value-author">Value author</label>
+            <input class="field__input field__input--sm" type="text" id="cv-value-author" autocomplete="off" spellcheck="false" />
+          </div>
+
+          <!-- category id -->
+          <div id="cv-field-category" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-category">Category ID</label>
+            <input class="field__input field__input--sm" type="number" min="0" id="cv-category" value="0" />
+          </div>
+
+          <!-- category name -->
+          <div id="cv-field-category-name" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-category-name">Category name</label>
+            <input class="field__input field__input--sm" type="text" id="cv-category-name" />
+          </div>
+
+          <!-- decimals -->
+          <div id="cv-field-decimals" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-decimals">Decimals</label>
+            <input class="field__input field__input--sm" type="number" min="0" max="18" id="cv-decimals" value="2" />
+          </div>
+
+          <!-- member address (membership) -->
+          <div id="cv-field-member" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-member">Member address</label>
+            <input class="field__input field__input--sm" type="text" id="cv-member" autocomplete="off" spellcheck="false" />
+          </div>
+
+          <!-- theme name -->
+          <div id="cv-field-theme" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-theme">Theme name</label>
+            <input class="field__input field__input--sm" type="text" id="cv-theme" />
+          </div>
+
+          <!-- statement text -->
+          <div id="cv-field-statement" class="cv-field-row" style="display:none">
+            <label class="cv-field-row__label" id="cv-label-statement">Statement</label>
+            <input class="field__input field__input--sm" type="text" id="cv-statement" />
+          </div>
+
+          <!-- duration -->
+          <div id="cv-field-duration" class="cv-field-row">
+            <label class="cv-field-row__label" id="cv-label-duration">Duration (days)</label>
+            <input class="field__input field__input--sm" type="number" min="1" id="cv-duration" value="7" />
+          </div>
+        </div>
+
+        <div class="create-voting__actions" id="cv-actions" style="display:none">
+          <button class="btn" id="cv-submit-btn">Submit</button>
+          <p id="cv-status" class="create-voting__status"></p>
         </div>
       </div>
 

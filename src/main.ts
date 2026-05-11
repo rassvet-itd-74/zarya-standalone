@@ -17,6 +17,7 @@ import {
   contractUnwatch,
   unwatchAll,
   getChainInfo,
+  getAddressBalance,
   checkOrganMembership,
 } from './zaryaClient';
 
@@ -144,6 +145,7 @@ ipcMain.handle('zarya:unwatch', (_event, eventName: string) =>
 );
 
 ipcMain.handle('zarya:chain', () => getChainInfo());
+ipcMain.handle('zarya:balance', (_e, address: string) => getAddressBalance(address));
 
 ipcMain.handle('zarya:checkOrgan', (_event, organ: string, address: string) =>
   checkOrganMembership(organ, address),

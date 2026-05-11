@@ -77,16 +77,25 @@ async function renderOrganTags(): Promise<void> {
 // ---- Dashboard view ----
 export async function showDashboard(address: string): Promise<void> {
   (document.getElementById('dashboard-address')       as HTMLElement).textContent = address;
+  (document.getElementById('dashboard-balance')        as HTMLElement).textContent = '…';
   (document.getElementById('dashboard-chain-id')      as HTMLElement).textContent = '';
   (document.getElementById('dashboard-block')         as HTMLElement).textContent = '';
   (document.getElementById('dashboard-organs')        as HTMLElement).innerHTML   = '';
   (document.getElementById('dashboard-votings-count') as HTMLElement).textContent = '…';
   show('dashboard-view');
 
-  const [chainResult, votingsResult] = await Promise.allSettled([
+  const [chainResult, votingsResult, balanceResult] = await Promise.allSettled([
     window.zaryaAPI.chain(),
     countActiveVotings(),
+    window.zaryaAPI.balance(address),
   ]);
+
+  if (balanceResult.status === 'fulfilled') {
+    (document.getElementById('dashboard-balance') as HTMLElement).textContent =
+      `${balanceResult.value} ETH`;
+  } else {
+    (document.getElementById('dashboard-balance') as HTMLElement).textContent = '?';
+  }
 
   if (chainResult.status === 'fulfilled') {
     (document.getElementById('dashboard-chain-id') as HTMLElement).textContent =

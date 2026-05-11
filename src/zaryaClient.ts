@@ -188,6 +188,13 @@ export async function getChainInfo(): Promise<{ blockNumber: string; chainId: nu
   return { blockNumber: blockNumber.toString(), chainId };
 }
 
+export async function getAddressBalance(address: string): Promise<string> {
+  const wei = await getPublic().getBalance({ address: address as `0x${string}` });
+  // Format to ETH with up to 6 decimal places, trim trailing zeros
+  const eth = Number(wei) / 1e18;
+  return eth.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
+}
+
 /**
  * Checks whether the given address is a member of the organ identified by its
  * bytes32 organ code. Read-only — no gas required.

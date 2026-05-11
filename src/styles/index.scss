@@ -884,3 +884,102 @@ body {
     justify-content: flex-end;
   }
 }
+
+// ---- Create voting ----
+.create-voting {
+  &__header {
+    display:         flex;
+    align-items:     center;
+    gap:             0.75rem;
+    margin-bottom:   1rem;
+  }
+
+  &__title { margin: 0; font-size: 1.25rem; }
+
+  &__actions {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.5rem;
+    margin-top:     1.25rem;
+  }
+
+  &__status {
+    font-size:  0.875rem;
+    min-height: 1.2rem;
+    opacity:    0.8;
+  }
+}
+
+.cv-step {
+  margin-bottom: 1rem;
+  &__label {
+    font-size:     0.875rem;
+    font-weight:   600;
+    margin-bottom: 0.4rem;
+    opacity:       0.75;
+  }
+}
+
+.cv-type-list {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       0.4rem;
+}
+
+.cv-type-btn {
+  padding:       0.35rem 0.75rem;
+  border-radius: $radius;
+  border:        1px solid var(--base-300);
+  background:    var(--base-100);
+  color:         var(--base-content);
+  cursor:        pointer;
+  font-size:     0.875rem;
+  transition:    background 0.15s, border-color 0.15s;
+
+  &:hover { background: var(--base-300); }
+
+  &--active {
+    background:   var(--primary);
+    color:        var(--primary-content);
+    border-color: var(--primary);
+  }
+}
+
+.cv-organ-picker {
+  display:     flex;
+  gap:         0.4rem;
+  flex-wrap:   wrap;
+  align-items: center;
+
+  select, input { flex: 1; min-width: 5rem; }
+}
+
+.cv-organ-resolved {
+  margin-top: 0.35rem;
+  font-size:  0.82rem;
+  min-height: 1.1rem;
+  opacity:    0.75;
+}
+
+.cv-field-row {
+  display:         flex;
+  align-items:     center;
+  gap:             0.65rem;
+  margin-bottom:   0.55rem;
+
+  &__label {
+    flex:          0 0 9rem;
+    font-size:     0.875rem;
+    font-weight:   500;
+  }
+
+  input, select { flex: 1; }
+}
+
+.cv-toggle {
+  display:     flex;
+  align-items: center;
+  gap:         0.5rem;
+  cursor:      pointer;
+  font-size:   0.875rem;
+}

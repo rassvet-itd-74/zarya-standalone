@@ -2,6 +2,7 @@ import { t } from '../i18n';
 import { currentAddress } from '../state';
 import { show } from '../utils';
 import { showDashboard } from './dashboard';
+import { showCreateVoting } from './createVoting';
 
 // ---- State ----
 interface VotingRow {
@@ -20,6 +21,7 @@ let castSupport = true;
 
 // ---- DOM refs ----
 const votingsBackBtn    = document.getElementById('votings-back-btn')    as HTMLButtonElement;
+const votingsCreateBtn  = document.getElementById('votings-create-btn')  as HTMLButtonElement;
 const votingsRefreshBtn = document.getElementById('votings-refresh-btn') as HTMLButtonElement;
 const votingsTabActive  = document.getElementById('votings-tab-active')  as HTMLButtonElement;
 const votingsTabPast    = document.getElementById('votings-tab-past')    as HTMLButtonElement;
@@ -37,6 +39,7 @@ const castStatus        = document.getElementById('cast-status')         as HTML
 export function applyVotingsTranslations(): void {
   (document.getElementById('votings-title') as HTMLElement).textContent = t('votings.title');
   votingsBackBtn.textContent    = t('votings.back');
+  votingsCreateBtn.textContent  = t('votings.createBtn');
   votingsRefreshBtn.textContent = t('votings.refresh');
   votingsTabActive.textContent  = t('votings.tabActive');
   votingsTabPast.textContent    = t('votings.tabPast');
@@ -349,6 +352,9 @@ castConfirmBtn.addEventListener('click', async () => {
   }
 });
 
+votingsCreateBtn.addEventListener('click', () => {
+  showCreateVoting({ back: () => showVotings() });
+});
 votingsBackBtn.addEventListener('click', async () => {
   await Promise.all([
     window.zaryaAPI.unwatch('VotingCreated'),

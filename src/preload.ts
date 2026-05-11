@@ -44,6 +44,9 @@ contextBridge.exposeInMainWorld('zaryaAPI', {
   chain: (): Promise<{ blockNumber: string; chainId: number }> =>
     ipcRenderer.invoke('zarya:chain'),
 
+  balance: (address: string): Promise<string> =>
+    ipcRenderer.invoke('zarya:balance', address),
+
   checkOrgan: (organCode: string, address: string): Promise<boolean> =>
     ipcRenderer.invoke('zarya:checkOrgan', organCode, address),
 

@@ -6,6 +6,7 @@ import { show } from './utils';
 import { showDashboard } from './views/dashboard';
 import { showVotings, applyVotingsTranslations } from './views/votings';
 import { showMatrix, applyMatrixTranslations } from './views/matrix';
+import { showCreateVoting, applyCreateVotingTranslations } from './views/createVoting';
 
 declare global {
   interface Window {
@@ -29,6 +30,7 @@ declare global {
       watch(eventName: string): Promise<void>;
       unwatch(eventName: string): Promise<void>;
       chain(): Promise<{ blockNumber: string; chainId: number }>;
+      balance(address: string): Promise<string>;
       checkOrgan(organCode: string, address: string): Promise<boolean>;
       onEvent(cb: (eventName: string, logs: unknown[]) => void): () => void;
     };
@@ -108,6 +110,7 @@ function applyTranslations(): void {
 
   (document.getElementById('dash-title')          as HTMLElement).textContent = t('dashboard.title');
   (document.getElementById('dash-address-label')  as HTMLElement).textContent = t('dashboard.addressLabel');
+  (document.getElementById('dash-balance-label')  as HTMLElement).textContent = t('dashboard.balanceLabel');
   (document.getElementById('dash-organs-label')   as HTMLElement).textContent = t('dashboard.organsLabel');
   (document.getElementById('dash-votings-label')  as HTMLElement).textContent = t('dashboard.activeVotingsLabel');
   (document.getElementById('dash-votings-btn')    as HTMLElement).textContent = t('dashboard.votingsBtn');
@@ -121,6 +124,7 @@ function applyTranslations(): void {
 
   applyVotingsTranslations();
   applyMatrixTranslations();
+  applyCreateVotingTranslations();
 
   langToggle.textContent = currentLang() === 'ru' ? 'EN' : 'RU';
   (document.getElementById('app-city')       as HTMLElement).textContent = t('city');

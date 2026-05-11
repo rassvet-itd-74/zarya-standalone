@@ -2,6 +2,7 @@ import { t } from '../i18n';
 import { show } from '../utils';
 import { currentAddress } from '../state';
 import { showDashboard } from './dashboard';
+import { showCreateVoting } from './createVoting';
 
 // ---- State ----
 type MatrixMode = 'numerical' | 'categorical';
@@ -436,5 +437,10 @@ cellLoadMoreBtn.addEventListener('click', async () => {
 });
 
 cellProposeBtn.addEventListener('click', () => {
-  // Phase 6 — placeholder
+  showCreateVoting({
+    isCategorical: matrixMode === 'categorical',
+    x: detailX,
+    y: detailY,
+    back: () => show('cell-detail-view'),
+  });
 });
