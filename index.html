@@ -97,6 +97,33 @@
         </div>
       </div>
 
+      <!-- Votings -->
+      <div id="votings-view" class="view votings" style="display:none">
+        <div class="votings__header">
+          <button class="btn btn--ghost btn--sm" id="votings-back-btn">← Back</button>
+          <h2 class="votings__title" id="votings-title">Votings</h2>
+          <button class="btn btn--ghost btn--sm" id="votings-refresh-btn">⟳</button>
+        </div>
+        <div class="votings__tabs" role="tablist">
+          <button class="votings__tab votings__tab--active" id="votings-tab-active" role="tab">Active</button>
+          <button class="votings__tab" id="votings-tab-past" role="tab">Past</button>
+        </div>
+        <div id="votings-list" class="votings__list"></div>
+        <div id="cast-vote-panel" class="cast-vote-panel" style="display:none">
+          <p id="cast-vote-label" class="cast-vote-panel__label"></p>
+          <div class="cast-vote-panel__support">
+            <button class="btn btn--sm" id="cast-for-btn">For</button>
+            <button class="btn btn--sm btn--outline" id="cast-against-btn">Against</button>
+          </div>
+          <select class="field__input field__input--sm" id="cast-organ-select"></select>
+          <div class="cast-vote-panel__actions">
+            <button class="btn btn--sm" id="cast-confirm-btn">Confirm</button>
+            <button class="btn btn--ghost btn--sm" id="cast-cancel-btn">Cancel</button>
+          </div>
+          <p id="cast-status" class="cast-vote-panel__status"></p>
+        </div>
+      </div>
+
       <!-- Network / DAO settings -->
       <div id="settings-view" class="view settings-form" style="display:none">
         <h2 class="settings-form__title">Network Settings</h2>
