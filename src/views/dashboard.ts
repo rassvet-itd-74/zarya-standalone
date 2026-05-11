@@ -1,5 +1,5 @@
 import { t } from '../i18n';
-import { currentAddress } from '../state';
+import { currentAddress, setIsOffline } from '../state';
 import { show } from '../utils';
 
 // ---- Organ tag DOM refs ----
@@ -98,11 +98,13 @@ export async function showDashboard(address: string): Promise<void> {
   }
 
   if (chainResult.status === 'fulfilled') {
+    setIsOffline(false);
     (document.getElementById('dashboard-chain-id') as HTMLElement).textContent =
       `Chain ${chainResult.value.chainId}`;
     (document.getElementById('dashboard-block') as HTMLElement).textContent =
       `${t('dashboard.block')} #${chainResult.value.blockNumber}`;
   } else {
+    setIsOffline(true);
     (document.getElementById('dashboard-chain-id') as HTMLElement).textContent =
       t('dashboard.offline');
   }

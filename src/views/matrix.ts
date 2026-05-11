@@ -3,6 +3,7 @@ import { show } from '../utils';
 import { currentAddress } from '../state';
 import { showDashboard } from './dashboard';
 import { showCreateVoting } from './createVoting';
+import { aggregateNumerical, aggregateCategorical } from './aggregation';
 
 // ---- State ----
 type MatrixMode = 'numerical' | 'categorical';
@@ -189,15 +190,21 @@ async function renderMatrixTable(): Promise<void> {
   });
 
   // Async: fill sample lengths
+  // getNumericalCellInfo → [organ, decimals, sampleLength]
+  // getCategoricalCellInfo → [organ, allowedCategories, sampleLength]
+  // viem may return a named object OR a tuple array; handle both.
   const getCellInfoFn = isCat ? 'getCategoricalCellInfo' : 'getNumericalCellInfo';
   for (const key of dataCells) {
     const [xs, ys] = key.split(',');
     window.zaryaAPI
       .read(getCellInfoFn, [BigInt(xs), BigInt(ys)])
       .then(res => {
-        const r   = res as { organ: `0x${string}`; sampleLength: bigint };
-        const el  = matrixTable.querySelector<HTMLElement>(`[data-count="${key}"]`);
-        if (el) el.textContent = String(r.sampleLength);
+        const r = res as Record<string, unknown> | unknown[];
+        const sampleLength = Array.isArray(r)
+          ? (r[2] as bigint | undefined)
+          : ((r as Record<string, unknown>).sampleLength as bigint | undefined);
+        const el = matrixTable.querySelector<HTMLElement>(`[data-count="${key}"]`);
+        if (el) el.textContent = sampleLength !== undefined ? String(sampleLength) : '?';
       })
       .catch(() => {
         const el = matrixTable.querySelector<HTMLElement>(`[data-count="${key}"]`);
@@ -225,23 +232,27 @@ async function openCellDetail(x: bigint, y: bigint): Promise<void> {
 
   const getCellInfoFn = isCat ? 'getCategoricalCellInfo' : 'getNumericalCellInfo';
   try {
-    const info = (await window.zaryaAPI.read(getCellInfoFn, [x, y])) as {
-      organ: `0x${string}`;
-      sampleLength: bigint;
-      decimals?: number;
-      allowedCategories?: bigint[];
-    };
-    detailSampleLen = info.sampleLength;
-    detailDecimals  = info.decimals ?? 0;
+    const res = await window.zaryaAPI.read(getCellInfoFn, [x, y]);
+    // Handle both named object and tuple array from viem
+    // Numerical:   [organ, decimals, sampleLength]
+    // Categorical: [organ, allowedCategories, sampleLength]
+    const r = res as Record<string, unknown> | unknown[];
+    const organ            = (Array.isArray(r) ? r[0] : r.organ)            as `0x${string}` | undefined;
+    const sampleLength     = (Array.isArray(r) ? r[2] : r.sampleLength)     as bigint        | undefined;
+    const decimals         = (Array.isArray(r) ? (isCat ? undefined : r[1]) : r.decimals)    as number        | undefined;
+
+    detailSampleLen = sampleLength ?? 0n;
+    detailDecimals  = decimals     ?? 0;
 
     // Resolve organ from local tags
-    const tags      = await window.tagsAPI.read();
-    const organTag  = tags.find(tg => tg.organ?.toLowerCase() === info.organ.toLowerCase());
+    const tags     = await window.tagsAPI.read();
+    const organLc  = organ?.toLowerCase();
+    const organTag = organLc ? tags.find(tg => tg.organ?.toLowerCase() === organLc) : undefined;
     cellOrganEl.innerHTML =
       `<span class="cell-detail__organ-label">${t('matrix.organ')}</span> ` +
-      `<code class="cell-detail__organ-code">${organTag ? organTag.code : shortAddr(info.organ)}</code>`;
+      `<code class="cell-detail__organ-code">${organTag ? organTag.code : organ ? shortAddr(organ) : '—'}</code>`;
 
-    await loadHistory(isCat, x, y, 0n, info.sampleLength, info.decimals ?? 0, true);
+    await loadHistory(isCat, x, y, 0n, detailSampleLen, detailDecimals, true);
   } catch (e) {
     cellOrganEl.innerHTML =
       `<span class="cell-detail__error">${e instanceof Error ? e.message : t('matrix.loadError')}</span>`;
@@ -258,10 +269,15 @@ async function loadHistory(
   isFirst: boolean,
 ): Promise<void> {
   const getFn = isCat ? 'getCategoricalHistory' : 'getNumericalHistory';
-  const hist  = (await window.zaryaAPI.read(getFn, [x, y, offset, HISTORY_PAGE])) as {
-    timestamps: number[];
-    authors:    string[];
-    values:     bigint[];
+  const histRaw = (await window.zaryaAPI.read(getFn, [x, y, offset, HISTORY_PAGE])) as {
+    timestamps?: number[];
+    authors?:    string[];
+    values?:     bigint[];
+  };
+  const hist = {
+    timestamps: histRaw?.timestamps ?? [],
+    authors:    histRaw?.authors    ?? [],
+    values:     histRaw?.values     ?? [],
   };
 
   // Pre-fetch category names for categorical mode
@@ -336,55 +352,44 @@ async function renderAggregation(
   // Load up to 200 samples for aggregation
   const aggLimit = sampleLen < 200n ? sampleLen : 200n;
   const getFn    = isCat ? 'getCategoricalHistory' : 'getNumericalHistory';
-  const hist     = (await window.zaryaAPI.read(getFn, [x, y, 0n, aggLimit])) as {
-    timestamps: number[];
-    authors:    string[];
-    values:     bigint[];
+  const histRaw  = (await window.zaryaAPI.read(getFn, [x, y, 0n, aggLimit])) as {
+    timestamps?: number[];
+    authors?:    string[];
+    values?:     bigint[];
+  };
+  const hist = {
+    timestamps: histRaw?.timestamps ?? [],
+    authors:    histRaw?.authors    ?? [],
+    values:     histRaw?.values     ?? [],
   };
 
   if (isCat) {
-    // Frequency distribution
-    const freq = new Map<string, number>();
-    for (const v of hist.values) {
-      const k = v.toString();
-      freq.set(k, (freq.get(k) ?? 0) + 1);
-    }
-    const total  = hist.values.length;
-    const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
-    const modeName = catNames?.get(sorted[0][0]) ?? sorted[0][0];
-
-    const bars = sorted.map(([cat, count]) => {
-      const label = catNames?.get(cat) ?? cat;
-      const pct   = Math.round((count / total) * 100);
-      return `<div class="cell-detail__bar-row">
-        <span class="cell-detail__bar-label" title="${label}">${label}</span>
+    const agg    = aggregateCategorical(hist.values, catNames);
+    const bars   = agg.distribution.map(({ key, pct }) =>
+      `<div class="cell-detail__bar-row">
+        <span class="cell-detail__bar-label" title="${key}">${key}</span>
         <div class="cell-detail__bar-track">
           <div class="cell-detail__bar-fill" style="width:${pct}%"></div>
         </div>
         <span class="cell-detail__bar-pct">${pct}%</span>
-      </div>`;
-    }).join('');
+      </div>`,
+    ).join('');
 
     cellAggregationEl.innerHTML =
       `<div class="cell-detail__agg">
-         <p class="cell-detail__agg-stat">${t('matrix.mode')}: <strong>${modeName}</strong></p>
+         <p class="cell-detail__agg-stat">${t('matrix.mode')}: <strong>${agg.mode}</strong></p>
          <div class="cell-detail__bars">${bars}</div>
-         <p class="cell-detail__agg-muted">${t('matrix.basedOn').replace('{n}', String(total))}</p>
+         <p class="cell-detail__agg-muted">${t('matrix.basedOn').replace('{n}', String(agg.count))}</p>
        </div>`;
   } else {
-    // Numerical: mean + stdev
-    const divisor = decimals > 0 ? Number(BigInt(10 ** decimals)) : 1;
-    const nums    = hist.values.map(v => Number(v) / divisor);
-    const mean    = nums.reduce((a, b) => a + b, 0) / nums.length;
-    const variance = nums.reduce((a, b) => a + (b - mean) ** 2, 0) / nums.length;
-    const stdev   = Math.sqrt(variance);
-    const fmt     = (n: number) => n.toFixed(decimals > 0 ? decimals : 2);
+    const agg = aggregateNumerical(hist.values, decimals);
+    const fmt = (n: number) => n.toFixed(decimals > 0 ? decimals : 2);
 
     cellAggregationEl.innerHTML =
       `<div class="cell-detail__agg">
-         <p class="cell-detail__agg-stat">${t('matrix.mean')}: <strong>${fmt(mean)}</strong></p>
-         <p class="cell-detail__agg-stat">${t('matrix.stdev')}: <strong>±${fmt(stdev)}</strong></p>
-         <p class="cell-detail__agg-muted">${t('matrix.basedOn').replace('{n}', String(nums.length))}</p>
+         <p class="cell-detail__agg-stat">${t('matrix.mean')}: <strong>${fmt(agg.mean)}</strong></p>
+         <p class="cell-detail__agg-stat">${t('matrix.stdev')}: <strong>±${fmt(agg.stdev)}</strong></p>
+         <p class="cell-detail__agg-muted">${t('matrix.basedOn').replace('{n}', String(agg.count))}</p>
        </div>`;
   }
 }

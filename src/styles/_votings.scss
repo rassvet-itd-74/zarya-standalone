@@ -1,0 +1,197 @@
+@use './variables' as *;
+
+// ---- Votings view ----
+.votings {
+  &__header {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    margin-bottom:   0.75rem;
+  }
+
+  &__header-actions {
+    display:     flex;
+    gap:         0.4rem;
+    align-items: center;
+  }
+
+  &__title {
+    font-size:   1.25rem;
+    font-weight: 700;
+    margin:      0;
+  }
+
+  &__tabs {
+    display:       flex;
+    gap:           0;
+    border-bottom: 1px solid var(--base-300);
+    margin-bottom: 0.75rem;
+  }
+
+  &__tab {
+    padding:       0.35rem 1rem;
+    border:        none;
+    background:    transparent;
+    font-size:     0.9rem;
+    cursor:        pointer;
+    color:         var(--base-content);
+    opacity:       0.55;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition:    opacity 0.15s, border-color 0.15s;
+
+    &--active {
+      opacity:             1;
+      border-bottom-color: var(--primary);
+      color:               var(--primary);
+      font-weight:         600;
+    }
+  }
+
+  &__list {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.55rem;
+  }
+
+  &__empty {
+    font-size:  0.9rem;
+    opacity:    0.5;
+    text-align: center;
+    padding:    2.5rem 0;
+  }
+}
+
+// ---- Voting row ----
+.voting-row {
+  border:        1px solid var(--base-300);
+  border-radius: $radius;
+  padding:       0.7rem 0.85rem;
+  background:    var(--base-200);
+  border-left:   3px solid var(--base-300);
+  transition:    border-color 0.2s;
+
+  &--active  { border-left-color: var(--primary); }
+  &--expired { border-left-color: var(--secondary); opacity: 0.82; }
+
+  &__header {
+    display:       flex;
+    align-items:   center;
+    gap:           0.45rem;
+    margin-bottom: 0.25rem;
+    flex-wrap:     wrap;
+  }
+
+  &__id {
+    font-weight: 700;
+    font-size:   0.9rem;
+  }
+
+  &__type-badge {
+    font-size:     0.72rem;
+    padding:       0.1rem 0.45rem;
+    background:    var(--neutral);
+    color:         var(--neutral-content);
+    border-radius: 9999px;
+    white-space:   nowrap;
+  }
+
+  &__deadline {
+    margin-left: auto;
+    font-size:   0.8rem;
+    color:       var(--accent);
+    font-weight: 500;
+  }
+
+  &__finalized-badge {
+    margin-left: auto;
+    font-size:   0.78rem;
+    font-weight: 600;
+
+    &--ok   { color: #16a34a; }
+    &--fail { color: $color-error; }
+  }
+
+  &__meta {
+    font-size:     0.78rem;
+    opacity:       0.5;
+    margin-bottom: 0.35rem;
+
+    code { font-size: 0.76rem; }
+  }
+
+  &__counts {
+    display:              flex;
+    gap:                  0.75rem;
+    font-size:            0.85rem;
+    font-variant-numeric: tabular-nums;
+    margin-bottom:        0.45rem;
+  }
+
+  &__for     { color: #16a34a; }
+  &__against { color: $color-error; }
+
+  &__actions {
+    display:     flex;
+    gap:         0.45rem;
+    align-items: flex-start;
+    flex-wrap:   wrap;
+  }
+
+  &__exec {
+    display:     flex;
+    gap:         0.35rem;
+    align-items: center;
+    flex-wrap:   wrap;
+
+    // Narrow number inputs inside the execute row
+    .field__input--sm { width: 5.5rem; }
+  }
+
+  &__exec-status {
+    display:    block;
+    width:      100%;
+    font-size:  0.8rem;
+    color:      $color-error;
+    margin-top: 0.2rem;
+  }
+}
+
+// ---- Cast vote panel ----
+.cast-vote-panel {
+  margin-top:    1rem;
+  padding:       0.9rem 1rem;
+  border:        1px solid var(--base-300);
+  border-radius: $radius;
+  background:    var(--base-200);
+
+  &__label {
+    font-weight:   600;
+    font-size:     0.9rem;
+    margin-bottom: 0.55rem;
+  }
+
+  &__support {
+    display:       flex;
+    gap:           0.45rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__btn--active {
+    outline:        2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  &__actions {
+    display:    flex;
+    gap:        0.45rem;
+    margin-top: 0.5rem;
+  }
+
+  &__status {
+    font-size:  0.85rem;
+    min-height: 1.2rem;
+    margin-top: 0.35rem;
+    opacity:    0.8;
+  }
+}

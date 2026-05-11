@@ -1,5 +1,5 @@
 import { t } from '../i18n';
-import { currentAddress } from '../state';
+import { currentAddress, isOffline } from '../state';
 import { show } from '../utils';
 import { showDashboard } from './dashboard';
 import { showCreateVoting } from './createVoting';
@@ -18,6 +18,7 @@ let votingsCurrentTab: 'active' | 'past' = 'active';
 let votingsRows: VotingRow[] = [];
 let castTargetId: string | null = null;
 let castSupport = true;
+let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
 // ---- DOM refs ----
 const votingsBackBtn    = document.getElementById('votings-back-btn')    as HTMLButtonElement;
@@ -151,7 +152,7 @@ function renderVotingsList(): void {
       const typeLabel = t(`votings.types.${v.typeKey}`);
       const deadlineHtml = v.finalized
         ? `<span class="voting-row__finalized-badge voting-row__finalized-badge--${v.finalizedSuccess ? 'ok' : 'fail'}">${v.finalizedSuccess ? '✓' : '✗'} ${t('votings.finalized')}</span>`
-        : `<span class="voting-row__deadline">${formatDeadline(v.endTime)}</span>`;
+        : `<span class="voting-row__deadline" data-deadline="${v.endTime}">${formatDeadline(v.endTime)}</span>`;
 
       const actionsHtml = [
         !v.finalized && !expired
@@ -223,6 +224,12 @@ function renderVotingsList(): void {
     const id = div.dataset.exec!;
     const execBtn = div.querySelector<HTMLButtonElement>('button')!;
     execBtn.addEventListener('click', async () => {
+      if (isOffline) {
+        let errEl = div.querySelector<HTMLElement>('.voting-row__exec-status');
+        if (!errEl) { errEl = document.createElement('span'); errEl.className = 'voting-row__exec-status'; div.appendChild(errEl); }
+        errEl.textContent = t('offline.readOnly');
+        return;
+      }
       const quorum   = BigInt(parseInt((div.querySelector<HTMLInputElement>('[data-quorum]')!).value  || '0',  10));
       const approval = BigInt(parseInt((div.querySelector<HTMLInputElement>('[data-approval]')!).value || '50', 10));
       execBtn.disabled = true;
@@ -306,7 +313,15 @@ export async function showVotings(): Promise<void> {
   votingsCurrentTab = 'active';
   votingsTabActive.classList.add('votings__tab--active');
   votingsTabPast.classList.remove('votings__tab--active');
-  votingsList.innerHTML = `<p class="votings__empty">${t('votings.loading')}</p>`;
+
+  // Loading skeleton
+  votingsList.innerHTML = Array(3).fill(0).map(() =>
+    `<div class="voting-row skeleton-row">
+       <div class="skeleton-row__line skeleton-row__line--title"></div>
+       <div class="skeleton-row__line skeleton-row__line--meta"></div>
+       <div class="skeleton-row__line skeleton-row__line--counts"></div>
+     </div>`,
+  ).join('');
 
   await Promise.all([
     window.zaryaAPI.watch('VotingCreated'),
@@ -315,6 +330,14 @@ export async function showVotings(): Promise<void> {
   ]).catch(() => {});
 
   await refreshVotings();
+
+  // Start countdown timer
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    votingsList.querySelectorAll<HTMLElement>('[data-deadline]').forEach(el => {
+      el.textContent = formatDeadline(parseInt(el.dataset.deadline!, 10));
+    });
+  }, 1000);
 }
 
 // ---- Event handlers ----
@@ -334,6 +357,7 @@ castCancelBtn.addEventListener('click', () => closeCastPanel());
 
 castConfirmBtn.addEventListener('click', async () => {
   if (!castTargetId) return;
+  if (isOffline) { castStatus.textContent = t('offline.readOnly'); return; }
   const organ = castOrganSelect.value;
   if (!organ) { castStatus.textContent = t('votings.selectOrgan'); return; }
   castConfirmBtn.disabled = true;
@@ -356,6 +380,7 @@ votingsCreateBtn.addEventListener('click', () => {
   showCreateVoting({ back: () => showVotings() });
 });
 votingsBackBtn.addEventListener('click', async () => {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
   await Promise.all([
     window.zaryaAPI.unwatch('VotingCreated'),
     window.zaryaAPI.unwatch('VotingFinalized'),

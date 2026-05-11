@@ -1,0 +1,209 @@
+@use './variables' as *;
+
+.dashboard {
+  &__header {
+    display:       flex;
+    align-items:   baseline;
+    gap:           0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  &__title {
+    font-size:   1.4rem;
+    font-weight: 700;
+    margin:      0;
+  }
+
+  &__chain-badge {
+    font-size:     0.75rem;
+    font-weight:   500;
+    padding:       0.15rem 0.5rem;
+    border:        1px solid var(--primary);
+    border-radius: 9999px;
+    color:         var(--primary);
+  }
+
+  &__address-block { margin-bottom: 0.25rem; }
+
+  &__address {
+    display:       block;
+    word-break:    break-all;
+    background:    var(--neutral);
+    color:         var(--neutral-content);
+    padding:       0.4rem 0.6rem;
+    border-radius: $radius;
+    font-size:     0.85rem;
+    margin-top:    0.2rem;
+    transition:    background 0.2s, color 0.2s;
+  }
+
+  &__balance {
+    display:              inline-block;
+    font-size:            0.9rem;
+    font-weight:          500;
+    margin-top:           0.2rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__label {
+    font-size:      0.8rem;
+    font-weight:    600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity:        0.55;
+  }
+
+  &__muted {
+    font-size: 0.8rem;
+    opacity:   0.45;
+    margin:    0.25rem 0 1rem;
+  }
+
+  &__section {
+    margin-top: 1rem;
+
+    &--row {
+      display:     flex;
+      align-items: center;
+      gap:         0.6rem;
+    }
+  }
+
+  &__organs {
+    display:    flex;
+    flex-wrap:  wrap;
+    gap:        0.4rem;
+    margin-top: 0.4rem;
+    min-height: 1.5rem;
+  }
+
+  &__organ-none {
+    font-size: 0.85rem;
+    opacity:   0.5;
+  }
+
+  &__organ-spinner {
+    width:            1rem;
+    height:           1rem;
+    border:           2px solid var(--secondary);
+    border-top-color: transparent;
+    border-radius:    50%;
+    animation:        organ-spin 0.7s linear infinite;
+    display:          inline-block;
+  }
+
+  &__organs-header {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    margin-bottom:   0.25rem;
+  }
+
+  &__organs-actions {
+    display: flex;
+    gap:     0.25rem;
+  }
+
+  &__organs-add {
+    display:     flex;
+    gap:         0.4rem;
+    margin-top:  0.5rem;
+    align-items: center;
+
+    #organ-code-input  { flex: 3; }
+    #organ-label-input { flex: 2; }
+  }
+
+  &__organ-tag {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           0.35rem;
+    padding:       0.2rem 0.4rem 0.2rem 0.55rem;
+    border-radius: 9999px;
+    font-size:     0.8rem;
+    font-weight:   500;
+    transition:    background 0.3s, color 0.3s;
+
+    &--unresolved {
+      background: var(--base-300);
+      color:      var(--base-content);
+      opacity:    0.55;
+      font-style: italic;
+    }
+
+    &--pending {
+      background: var(--base-300);
+      color:      var(--base-content);
+      opacity:    0.7;
+    }
+
+    &--member {
+      background: #22c55e1a;
+      color:      #16a34a;
+      border:     1px solid #22c55e55;
+
+      [data-theme="dark"] & {
+        background:   #16a34a33;
+        color:        #4ade80;
+        border-color: #22c55e44;
+      }
+    }
+
+    &--unknown {
+      background: #f59e0b1a;
+      color:      #b45309;
+      border:     1px solid #f59e0b55;
+
+      [data-theme="dark"] & {
+        background:   #92400e33;
+        color:        #fbbf24;
+        border-color: #f59e0b44;
+      }
+    }
+  }
+
+  &__organ-dot {
+    width:         0.45rem;
+    height:        0.45rem;
+    border-radius: 50%;
+    flex-shrink:   0;
+    background:    currentColor;
+  }
+
+  &__organ-remove {
+    background:  none;
+    border:      none;
+    cursor:      pointer;
+    color:       currentColor;
+    opacity:     0.5;
+    padding:     0;
+    line-height: 1;
+    font-size:   0.85rem;
+    margin-left: 0.1rem;
+
+    &:hover { opacity: 1; }
+  }
+
+  &__count-badge {
+    display:       inline-block;
+    min-width:     1.6rem;
+    padding:       0.15rem 0.5rem;
+    background:    var(--primary);
+    color:         var(--primary-content);
+    border-radius: 9999px;
+    font-size:     0.8rem;
+    font-weight:   600;
+    text-align:    center;
+  }
+
+  &__nav {
+    display:    flex;
+    flex-wrap:  wrap;
+    gap:        0.6rem;
+    margin-top: 1.5rem;
+  }
+}
+
+@keyframes organ-spin {
+  to { transform: rotate(360deg); }
+}

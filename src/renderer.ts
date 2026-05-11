@@ -126,6 +126,8 @@ function applyTranslations(): void {
   applyMatrixTranslations();
   applyCreateVotingTranslations();
 
+  (document.getElementById('rpc-banner') as HTMLElement).textContent = t('offline.banner');
+
   langToggle.textContent = currentLang() === 'ru' ? 'EN' : 'RU';
   (document.getElementById('app-city')       as HTMLElement).textContent = t('city');
   (document.getElementById('app-dev-credit') as HTMLElement).textContent = t('devCredit');

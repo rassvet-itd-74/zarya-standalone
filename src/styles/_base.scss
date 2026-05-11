@@ -1,0 +1,42 @@
+@use './variables' as *;
+
+body {
+  font-family:      $font-stack;
+  margin:           auto;
+  max-width:        38rem;
+  padding:          2rem;
+  background-color: var(--base-100);
+  color:            var(--base-content);
+  transition:       background-color 0.2s, color 0.2s;
+}
+
+.app-footer {
+  text-align:  center;
+  margin-top:  2rem;
+  font-size:   0.75rem;
+  opacity:     0.45;
+  user-select: none;
+}
+
+.app-logo {
+  display:   block;
+  max-width: 160px;
+  margin:    0 auto 2rem;
+}
+
+.lang-toggle {
+  position:      fixed;
+  top:           1rem;
+  right:         1rem;
+  padding:       0.25rem 0.6rem;
+  border:        1px solid var(--base-300);
+  border-radius: $radius;
+  background:    transparent;
+  color:         var(--base-content);
+  font-size:     0.8rem;
+  cursor:        pointer;
+  opacity:       0.6;
+  transition:    border-color 0.2s, color 0.2s;
+
+  &:hover { opacity: 1; }
+}

@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 import { show } from '../utils';
-import { currentAddress } from '../state';
+import { currentAddress, isOffline } from '../state';
 
 // ---- Voting types ----
 type VotingType =
@@ -82,6 +82,7 @@ const cvTheme            = document.getElementById('cv-theme')                 a
 const cvFieldStatement   = document.getElementById('cv-field-statement')       as HTMLElement;
 const cvStatement        = document.getElementById('cv-statement')             as HTMLInputElement;
 const cvDuration         = document.getElementById('cv-duration')              as HTMLInputElement;
+const cvDurationUnit     = document.getElementById('cv-duration-unit')         as HTMLSelectElement;
 const cvActions          = document.getElementById('cv-actions')               as HTMLElement;
 const cvSubmitBtn        = document.getElementById('cv-submit-btn')            as HTMLButtonElement;
 const cvStatus           = document.getElementById('cv-status')                as HTMLElement;
@@ -104,6 +105,11 @@ export function applyCreateVotingTranslations(): void {
   (document.getElementById('cv-label-theme')         as HTMLElement).textContent = t('createVoting.labelTheme');
   (document.getElementById('cv-label-statement')     as HTMLElement).textContent = t('createVoting.labelStatement');
   (document.getElementById('cv-label-duration')      as HTMLElement).textContent = t('createVoting.labelDuration');
+  // Translate unit selector options
+  (document.getElementById('cv-unit-minutes') as HTMLOptionElement).textContent = t('createVoting.durationUnits.minutes');
+  (document.getElementById('cv-unit-hours')   as HTMLOptionElement).textContent = t('createVoting.durationUnits.hours');
+  (document.getElementById('cv-unit-days')    as HTMLOptionElement).textContent = t('createVoting.durationUnits.days');
+  (document.getElementById('cv-unit-months')  as HTMLOptionElement).textContent = t('createVoting.durationUnits.months');
   cvOrganResolveBtn.textContent  = t('createVoting.organResolveBtn');
   cvSubmitBtn.textContent        = t('createVoting.submitBtn');
   updateIsCatLabel();
@@ -219,10 +225,23 @@ async function resolveOrgan(): Promise<void> {
 // ---- Validation helpers ----
 const isAddress = (s: string) => /^0x[0-9a-fA-F]{40}$/.test(s.trim());
 
+// ---- Duration → seconds ----
+function durationToSeconds(): bigint {
+  const amount = Math.max(1, parseInt(cvDuration.value, 10) || 1);
+  const unit   = cvDurationUnit.value as 'minutes' | 'hours' | 'days' | 'months';
+  const multipliers: Record<typeof unit, number> = {
+    minutes: 60,
+    hours:   3600,
+    days:    86400,
+    months:  2592000, // 30 days
+  };
+  return BigInt(amount * multipliers[unit]);
+}
+
 // ---- Build tx args ----
 function buildTxArgs(): { fn: string; args: unknown[] } | string {
   if (!selectedType) return t('createVoting.typeLabel');
-  const durationSec = BigInt(Math.max(1, parseInt(cvDuration.value, 10) || 7) * 86400);
+  const durationSec = durationToSeconds();
   const isCat = cvIsCat.checked;
   const x = BigInt(parseInt(cvX.value, 10) || 0);
   const y = BigInt(parseInt(cvY.value, 10) || 0);
@@ -278,6 +297,7 @@ function buildTxArgs(): { fn: string; args: unknown[] } | string {
 // ---- Submit ----
 async function submitVoting(): Promise<void> {
   cvStatus.textContent = '';
+  if (isOffline) { cvStatus.textContent = t('offline.readOnly'); return; }
   const tx = buildTxArgs();
   if (typeof tx === 'string') { cvStatus.textContent = tx; return; }
 
@@ -325,7 +345,8 @@ export function showCreateVoting(ctx: CreateVotingContext): void {
   updateIsCatLabel();
   if (prefillX !== null) cvX.value = prefillX.toString();
   if (prefillY !== null) cvY.value = prefillY.toString();
-  cvDuration.value = '7';
+  cvDuration.value     = '7';
+  cvDurationUnit.value = 'days';
 
   initOrganSelects();
   renderTypeButtons();

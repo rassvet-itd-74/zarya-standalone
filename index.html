@@ -15,6 +15,7 @@
     </label>
     <button id="lang-toggle" class="lang-toggle">EN</button>
     <div id="app">
+      <div id="rpc-banner" class="rpc-banner" style="display:none" id="rpc-banner-text">&#9888; RPC offline — read-only mode</div>
       <img id="app-logo" class="app-logo" src="" alt="Zarya" />
 
       <!-- Shown when no keystore exists yet -->
@@ -262,8 +263,14 @@
 
           <!-- duration -->
           <div id="cv-field-duration" class="cv-field-row">
-            <label class="cv-field-row__label" id="cv-label-duration">Duration (days)</label>
-            <input class="field__input field__input--sm" type="number" min="1" id="cv-duration" value="7" />
+            <label class="cv-field-row__label" id="cv-label-duration">Duration</label>
+            <input class="field__input field__input--sm" type="number" min="1" id="cv-duration" value="7" style="width:5rem;flex:none" />
+            <select class="field__input field__input--sm" id="cv-duration-unit" style="width:auto;flex:none">
+              <option value="minutes" id="cv-unit-minutes">min</option>
+              <option value="hours"   id="cv-unit-hours">h</option>
+              <option value="days"    id="cv-unit-days" selected>days</option>
+              <option value="months"  id="cv-unit-months">mo</option>
+            </select>
           </div>
         </div>
 

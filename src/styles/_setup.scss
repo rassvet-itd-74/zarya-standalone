@@ -1,0 +1,24 @@
+@use './variables' as *;
+
+// Private placeholder — shared between the two error paragraphs in this file.
+// (SCSS placeholders cannot cross @use module boundaries, so it lives here.)
+%_form-error {
+  color:      $color-error;
+  font-size:  0.875rem;
+  min-height: 1.25rem;
+}
+
+.setup-form {
+  &__error { @extend %_form-error; }
+}
+
+.unlock-form {
+  &__error { @extend %_form-error; }
+
+  &__status {
+    font-size:  0.875rem;
+    min-height: 1.25rem;
+    color:      var(--base-content);
+    opacity:    0.7;
+  }
+}

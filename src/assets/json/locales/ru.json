@@ -38,6 +38,11 @@
     "errorInvalidAddress": "Введите корректный адрес контракта (0x\u2026).",
     "errorInvalidChainId": "Введите корректный идентификатор сети."
   },
+  "offline": {
+    "banner": "⚠️ RPC недоступен — режим чтения",
+    "readOnly": "Нет связи — запись недоступна.",
+    "badge": "Только чтение"
+  },
   "dashboard": {
     "title": "Панель управления",
     "addressLabel": "Адрес",
@@ -150,7 +155,13 @@
     "labelMember": "Адрес участника",
     "labelTheme": "Название темы",
     "labelStatement": "Текст высказывания",
-    "labelDuration": "Длительность (дней)",
+    "labelDuration": "Длительность",
+    "durationUnits": {
+      "minutes": "мин",
+      "hours": "часов",
+      "days": "дней",
+      "months": "мес"
+    },
     "submitBtn": "Отправить",
     "sending": "Отправка транзакции…",
     "waiting": "Ожидание подтверждения…",

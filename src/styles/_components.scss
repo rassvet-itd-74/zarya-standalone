@@ -1,0 +1,120 @@
+@use './variables' as *;
+
+// ---- field ----
+.field {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.25rem;
+  margin-bottom:  0.75rem;
+
+  &__label {
+    font-size:   0.875rem;
+    font-weight: 500;
+  }
+
+  &__input {
+    padding:       0.5rem 0.75rem;
+    border:        1px solid var(--base-300);
+    border-radius: $radius;
+    font-size:     1rem;
+    width:         100%;
+    box-sizing:    border-box;
+    background:    var(--base-200);
+    color:         var(--base-content);
+    transition:    background 0.2s, border-color 0.2s, color 0.2s;
+
+    &:focus {
+      outline:      none;
+      border-color: var(--primary);
+    }
+
+    // Compact variant used in organ-picker, cast panel, create-voting
+    &--sm {
+      padding:   0.25rem 0.5rem;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// ---- btn ----
+.btn {
+  padding:       0.5rem 1.25rem;
+  border:        none;
+  border-radius: $radius;
+  background:    var(--primary);
+  color:         var(--primary-content);
+  font-size:     1rem;
+  cursor:        pointer;
+  transition:    opacity 0.2s;
+
+  &:disabled,
+  &--disabled {
+    opacity: 0.6;
+    cursor:  not-allowed;
+  }
+
+  &--outline {
+    background: transparent;
+    border:     1px solid var(--primary);
+    color:      var(--primary);
+  }
+
+  &--ghost {
+    background: transparent;
+    border:     1px solid var(--base-300);
+    color:      var(--base-content);
+    opacity:    0.7;
+
+    &:hover { opacity: 1; }
+  }
+
+  &--sm {
+    padding:   0.3rem 0.8rem;
+    font-size: 0.875rem;
+  }
+
+  &--xs {
+    padding:     0.15rem 0.45rem;
+    font-size:   0.75rem;
+    line-height: 1.2;
+  }
+}
+
+// ---- theme-toggle slider ----
+.theme-toggle {
+  &__input {
+    position: absolute;
+    opacity:  0;
+    width:    0;
+    height:   0;
+
+    &:checked + .theme-toggle__track {
+      background: var(--primary);
+
+      .theme-toggle__thumb { transform: translateX(1rem); }
+    }
+  }
+
+  &__track {
+    position:      relative;
+    display:       inline-block;
+    width:         2.25rem;
+    height:        1.25rem;
+    background:    var(--base-300);
+    border-radius: 9999px;
+    flex-shrink:   0;
+    transition:    background 0.2s;
+  }
+
+  &__thumb {
+    position:      absolute;
+    top:           2px;
+    left:          2px;
+    width:         1rem;
+    height:        1rem;
+    background:    #fff;
+    border-radius: 50%;
+    transition:    transform 0.2s;
+    box-shadow:    0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+}
