@@ -1,9 +1,20 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import { hasKey, createKey, loadKey, exportKey, importKey } from './keyManager';
+import { hasKey, createKeyRaw, loadKeyRaw, exportKey, importKey } from './keyManager';
 import { readConfig, writeConfig, Config } from './configManager';
 import { createPublicClient, http } from 'viem';
+import {
+  initPublicClient,
+  setWalletAccount,
+  contractRead,
+  contractWrite,
+  contractWaitTx,
+  contractGetLogs,
+  contractWatch,
+  contractUnwatch,
+  unwatchAll,
+} from './zaryaClient';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -38,12 +49,18 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  createWindow();
+  // Bootstrap the public client if the operator has already saved config.
+  const cfg = readConfig();
+  if (cfg) initPublicClient(cfg);
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  unwatchAll();
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -62,9 +79,19 @@ app.on('activate', () => {
 
 ipcMain.handle('key:hasKey', () => hasKey());
 
-ipcMain.handle('key:create', (_event, password: string) => createKey(password));
+ipcMain.handle('key:create', async (_event, password: string) => {
+  const { address, privateKey } = createKeyRaw(password);
+  const cfg = readConfig();
+  if (cfg) setWalletAccount(privateKey);
+  return address;
+});
 
-ipcMain.handle('key:unlock', (_event, password: string) => loadKey(password));
+ipcMain.handle('key:unlock', async (_event, password: string) => {
+  const { address, privateKey } = loadKeyRaw(password);
+  const cfg = readConfig();
+  if (cfg) setWalletAccount(privateKey);
+  return address;
+});
 
 ipcMain.handle('key:export', () => exportKey());
 
@@ -72,10 +99,42 @@ ipcMain.handle('key:import', () => importKey());
 
 ipcMain.handle('config:read', () => readConfig());
 
-ipcMain.handle('config:write', (_event, config: Config) => writeConfig(config));
+ipcMain.handle('config:write', (_event, config: Config) => {
+  writeConfig(config);
+  initPublicClient(config);
+  // wallet client is reset by initPublicClient — user re-unlocks on next action
+});
 
 ipcMain.handle('config:test', async () => {
   if (!__RPC_URL__) throw new Error('RPC URL not configured');
   const client = createPublicClient({ transport: http(__RPC_URL__) });
   return await client.getChainId();
 });
+
+// --- Zarya contract IPC ---
+
+ipcMain.handle('zarya:read', (_event, fn: string, args: unknown[]) =>
+  contractRead(fn, args),
+);
+
+ipcMain.handle('zarya:write', (_event, fn: string, args: unknown[]) =>
+  contractWrite(fn, args),
+);
+
+ipcMain.handle('zarya:waitTx', (_event, hash: `0x${string}`) =>
+  contractWaitTx(hash),
+);
+
+ipcMain.handle(
+  'zarya:getLogs',
+  (_event, eventName: string, fromBlock?: number | bigint) =>
+    contractGetLogs(eventName, fromBlock !== undefined ? BigInt(fromBlock) : 0n),
+);
+
+ipcMain.handle('zarya:watch', (event, eventName: string) =>
+  contractWatch(eventName, event.sender),
+);
+
+ipcMain.handle('zarya:unwatch', (_event, eventName: string) =>
+  contractUnwatch(eventName),
+);

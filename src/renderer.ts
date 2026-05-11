@@ -16,6 +16,15 @@ declare global {
       write(config: { contractAddress: string; chainId: number }): Promise<void>;
       test(): Promise<number>;
     };
+    zaryaAPI: {
+      read(fn: string, args: unknown[]): Promise<unknown>;
+      write(fn: string, args: unknown[]): Promise<`0x${string}`>;
+      waitTx(hash: `0x${string}`): Promise<unknown>;
+      getLogs(eventName: string, fromBlock?: bigint): Promise<unknown[]>;
+      watch(eventName: string): Promise<void>;
+      unwatch(eventName: string): Promise<void>;
+      onEvent(cb: (eventName: string, logs: unknown[]) => void): () => void;
+    };
   }
 }
 

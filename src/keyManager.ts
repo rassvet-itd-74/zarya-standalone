@@ -39,6 +39,17 @@ export function hasKey(): boolean {
  * Throws if a key already exists.
  */
 export function createKey(password: string): string {
+  return createKeyRaw(password).address;
+}
+
+/**
+ * Generates a new private key, encrypts it, persists it, and returns both
+ * the address and the raw private key.
+ * MAIN-PROCESS ONLY — never send privateKey over IPC.
+ */
+export function createKeyRaw(
+  password: string,
+): { address: string; privateKey: `0x${string}` } {
   if (hasKey()) throw new Error('Key already exists');
 
   const privateKey = generatePrivateKey();
@@ -61,14 +72,15 @@ export function createKey(password: string): string {
 
   fs.writeFileSync(keystorePath(), JSON.stringify(keystore), { mode: 0o600 });
 
-  return privateKeyToAccount(privateKey).address;
+  return { address: privateKeyToAccount(privateKey).address, privateKey };
 }
 
 /**
  * Decrypts the persisted private key with the given password and returns
- * the corresponding address. Throws on wrong password or missing keystore.
+ * the raw private key hex string. Throws on wrong password or missing keystore.
+ * PRIVATE — never call this from IPC handlers; only use it in this module.
  */
-export function loadKey(password: string): string {
+function decryptKey(password: string): `0x${string}` {
   if (!hasKey()) throw new Error('No keystore found');
 
   const keystore: Keystore = JSON.parse(
@@ -91,8 +103,26 @@ export function loadKey(password: string): string {
     throw new Error('Invalid password');
   }
 
-  const privateKey = `0x${plaintext.toString('hex')}` as `0x${string}`;
-  return privateKeyToAccount(privateKey).address;
+  return `0x${plaintext.toString('hex')}` as `0x${string}`;
+}
+
+/**
+ * Decrypts the persisted private key with the given password and returns
+ * the corresponding address. Throws on wrong password or missing keystore.
+ */
+export function loadKey(password: string): string {
+  return privateKeyToAccount(decryptKey(password)).address;
+}
+
+/**
+ * Decrypts the persisted private key and returns both the address and the
+ * raw private key. MAIN-PROCESS ONLY — never send privateKey over IPC.
+ */
+export function loadKeyRaw(
+  password: string,
+): { address: string; privateKey: `0x${string}` } {
+  const privateKey = decryptKey(password);
+  return { address: privateKeyToAccount(privateKey).address, privateKey };
 }
 
 /**
