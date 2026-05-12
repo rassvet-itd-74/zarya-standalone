@@ -48,7 +48,15 @@ export async function importTags(): Promise<OrganTag[] | null> {
   try {
     const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf-8'));
     if (!Array.isArray(data)) return null;
-    return data as OrganTag[];
+    const valid = data.filter(
+      (item): item is OrganTag =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof item.code === 'string' &&
+        item.code.length > 0 &&
+        (item.organ === undefined || typeof item.organ === 'string'),
+    );
+    return valid;
   } catch {
     return null;
   }

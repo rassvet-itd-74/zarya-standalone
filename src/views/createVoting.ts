@@ -235,7 +235,7 @@ function durationToSeconds(): bigint {
     days:    86400,
     months:  2592000, // 30 days
   };
-  return BigInt(amount * multipliers[unit]);
+  return BigInt(amount) * BigInt(multipliers[unit]);
 }
 
 // ---- Build tx args ----
@@ -306,10 +306,8 @@ async function submitVoting(): Promise<void> {
   try {
     const hash = await window.zaryaAPI.write(tx.fn, tx.args);
     cvStatus.textContent = t('createVoting.waiting');
-    const receipt = await window.zaryaAPI.waitTx(hash);
-    const nextId  = await window.zaryaAPI.read('nextVotingId', []) as bigint;
-    const votingId = (nextId - 1n).toString();
-    void receipt;
+    const result = await window.zaryaAPI.waitTx(hash) as { votingId: string | null };
+    const votingId = result.votingId ?? '?';
     cvStatus.textContent = t('createVoting.done').replace('{id}', votingId);
   } catch (e) {
     cvStatus.textContent = e instanceof Error ? e.message : t('votings.txError');

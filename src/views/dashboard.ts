@@ -39,13 +39,13 @@ async function renderOrganTags(): Promise<void> {
   }
 
   organsEl.innerHTML = tags
-    .map((tag, i) => {
+    .map((tag) => {
       const resolved = !!tag.organ;
       return (
-        `<span class="dashboard__organ-tag ${resolved ? 'dashboard__organ-tag--pending' : 'dashboard__organ-tag--unresolved'}" data-index="${i}" title="${tag.organ ?? t('organs.unresolved')}">` +
+        `<span class="dashboard__organ-tag ${resolved ? 'dashboard__organ-tag--pending' : 'dashboard__organ-tag--unresolved'}" data-code="${tag.code}" title="${tag.organ ?? t('organs.unresolved')}">` +
         `<span class="dashboard__organ-dot"></span>` +
         `<span>${tag.code}</span>` +
-        `<button class="dashboard__organ-remove" data-index="${i}" aria-label="${t('organs.remove')}">×</button>` +
+        `<button class="dashboard__organ-remove" data-code="${tag.code}" aria-label="${t('organs.remove')}">×</button>` +
         `</span>`
       );
     })
@@ -54,18 +54,19 @@ async function renderOrganTags(): Promise<void> {
   organsEl.querySelectorAll<HTMLButtonElement>('.dashboard__organ-remove').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
-      const idx = parseInt(btn.dataset.index!);
+      const code = btn.dataset.code!;
       const current = await window.tagsAPI.read();
-      await window.tagsAPI.write(current.filter((_, i) => i !== idx));
+      await window.tagsAPI.write(current.filter(tg => tg.code !== code));
       renderOrganTags();
     });
   });
 
   if (currentAddress) {
-    tags.forEach((tag, i) => {
+    tags.forEach((tag) => {
       if (!tag.organ) return;
       window.zaryaAPI.checkOrgan(tag.organ, currentAddress).then(isMember => {
-        const tagEl = organsEl.querySelector<HTMLElement>(`[data-index="${i}"]`);
+        const tagEl = Array.from(organsEl.querySelectorAll<HTMLElement>('.dashboard__organ-tag'))
+          .find(el => el.dataset.code === tag.code) ?? null;
         if (!tagEl) return;
         tagEl.classList.remove('dashboard__organ-tag--pending');
         tagEl.classList.add(isMember ? 'dashboard__organ-tag--member' : 'dashboard__organ-tag--unknown');

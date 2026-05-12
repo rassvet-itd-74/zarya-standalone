@@ -156,6 +156,19 @@ export async function importKey(): Promise<boolean> {
   });
   if (canceled || filePaths.length === 0) return false;
 
+  // Warn the user if a key already exists — it will be permanently replaced
+  if (hasKey()) {
+    const { response } = await dialog.showMessageBox({
+      type: 'warning',
+      buttons: ['Cancel', 'Replace'],
+      defaultId: 0,
+      cancelId: 0,
+      title: 'Replace keystore',
+      message: 'A key already exists. Importing will permanently replace it. Make sure you have a backup of your current keystore before proceeding.',
+    });
+    if (response !== 1) return false;
+  }
+
   const raw = fs.readFileSync(filePaths[0], 'utf-8');
   const parsed = JSON.parse(raw) as Record<string, unknown>;
   if (

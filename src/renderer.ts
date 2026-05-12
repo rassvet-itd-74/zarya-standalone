@@ -220,7 +220,11 @@ importBtn.addEventListener('click', async () => {
   if (currentAddress) {
     const config = await window.configAPI.read();
     if (config) { await showDashboard(currentAddress); return; }
+    show('settings-view');
+    return;
   }
+  const exists = await window.electronAPI.hasKey();
+  show(exists ? 'unlock-view' : 'setup-view');
 });
 
 // ---- Settings ----
@@ -289,8 +293,11 @@ langToggle.addEventListener('click', async () => {
 });
 
 // ---- Dashboard navigation ----
-(document.getElementById('dash-settings-btn') as HTMLButtonElement).addEventListener('click', () => {
+(document.getElementById('dash-settings-btn') as HTMLButtonElement).addEventListener('click', async () => {
   settingsStatus.textContent = '';
+  const config = await window.configAPI.read();
+  contractAddressInput.value = config?.contractAddress ?? DEFAULT_CONTRACT_ADDRESS;
+  chainIdInput.value = String(config?.chainId ?? DEFAULT_CHAIN_ID);
   show('settings-view');
 });
 (document.getElementById('dash-wallet-btn')  as HTMLButtonElement).addEventListener('click', () => show('wallet-view'));

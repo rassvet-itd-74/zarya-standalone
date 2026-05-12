@@ -30,7 +30,7 @@ export function aggregateNumerical(rawValues: bigint[], decimals: number): Numer
   const nums    = rawValues.map(v => Number(v) / divisor);
   const count   = nums.length;
   const mean    = nums.reduce((a, b) => a + b, 0) / count;
-  const variance = nums.reduce((a, b) => a + (b - mean) ** 2, 0) / count;
+  const variance = nums.reduce((a, b) => a + (b - mean) ** 2, 0) / (count > 1 ? count - 1 : 1);
   const stdev   = Math.sqrt(variance);
   const min     = Math.min(...nums);
   const max     = Math.max(...nums);

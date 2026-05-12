@@ -3,6 +3,8 @@ import {
   createWalletClient,
   http,
   defineChain,
+  parseEventLogs,
+  formatEther,
 } from 'viem';
 import type { Abi, AbiEvent, Log, Account, HttpTransport, Chain } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -114,13 +116,26 @@ export async function contractWrite(
     abi: zaryaAbi as Abi,
     functionName: fn,
     args,
-    chain: null,
+    chain: buildChain(currentConfig!.chainId),
     account: wallet.account!,
   });
 }
 
-export async function contractWaitTx(hash: `0x${string}`) {
-  return getPublic().waitForTransactionReceipt({ hash });
+export async function contractWaitTx(hash: `0x${string}`): Promise<{ votingId: string | null }> {
+  const receipt = await getPublic().waitForTransactionReceipt({ hash });
+  let votingId: string | null = null;
+  try {
+    const parsed = parseEventLogs({
+      abi: zaryaAbi as Abi,
+      eventName: 'VotingCreated',
+      logs: receipt.logs,
+    });
+    if (parsed.length > 0) {
+      const a = parsed[0].args as Record<string, unknown>;
+      votingId = a.votingId !== undefined ? String(a.votingId) : null;
+    }
+  } catch { /* not a VotingCreated tx */ }
+  return { votingId };
 }
 
 export async function contractGetLogs(
@@ -190,9 +205,11 @@ export async function getChainInfo(): Promise<{ blockNumber: string; chainId: nu
 
 export async function getAddressBalance(address: string): Promise<string> {
   const wei = await getPublic().getBalance({ address: address as `0x${string}` });
-  // Format to ETH with up to 6 decimal places, trim trailing zeros
-  const eth = Number(wei) / 1e18;
-  return eth.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
+  const eth = formatEther(wei);
+  // Trim to at most 6 decimal places, removing trailing zeros
+  const [whole, frac = ''] = eth.split('.');
+  const trimmed = frac.slice(0, 6).replace(/0+$/, '');
+  return trimmed ? `${whole}.${trimmed}` : whole;
 }
 
 /**

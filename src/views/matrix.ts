@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 import { show } from '../utils';
-import { currentAddress } from '../state';
+import { currentAddress, setIsOffline } from '../state';
 import { showDashboard } from './dashboard';
 import { showCreateVoting } from './createVoting';
 import { aggregateNumerical, aggregateCategorical } from './aggregation';
@@ -19,6 +19,7 @@ let detailY: bigint = 0n;
 let detailDecimals    = 0;
 let detailSampleLen: bigint = 0n;
 let detailHistOffset: bigint = 0n;
+let openCellGeneration = 0;
 
 const HISTORY_PAGE = 20n;
 
@@ -145,7 +146,14 @@ async function renderMatrixTable(): Promise<void> {
   matrixTableWrap.style.display = 'none';
   matrixTable.innerHTML        = '';
 
-  const { xs, ys, themes, statements, dataCells } = await discoverDimensions(isCat);
+  const dim = await discoverDimensions(isCat).catch((e) => {
+    setIsOffline(true);
+    matrixLoading.textContent = e instanceof Error ? e.message : t('matrix.loadError');
+    return null;
+  });
+  if (!dim) return;
+  setIsOffline(false);
+  const { xs, ys, themes, statements, dataCells } = dim;
   matrixXs         = xs;
   matrixYs         = ys;
   matrixThemes     = themes;
@@ -215,6 +223,7 @@ async function renderMatrixTable(): Promise<void> {
 
 // ---- Cell detail ----
 async function openCellDetail(x: bigint, y: bigint): Promise<void> {
+  const generation = ++openCellGeneration;
   detailX           = x;
   detailY           = y;
   detailHistOffset  = 0n;
@@ -233,6 +242,7 @@ async function openCellDetail(x: bigint, y: bigint): Promise<void> {
   const getCellInfoFn = isCat ? 'getCategoricalCellInfo' : 'getNumericalCellInfo';
   try {
     const res = await window.zaryaAPI.read(getCellInfoFn, [x, y]);
+    if (generation !== openCellGeneration) return;
     // Handle both named object and tuple array from viem
     // Numerical:   [organ, decimals, sampleLength]
     // Categorical: [organ, allowedCategories, sampleLength]
@@ -246,6 +256,7 @@ async function openCellDetail(x: bigint, y: bigint): Promise<void> {
 
     // Resolve organ from local tags
     const tags     = await window.tagsAPI.read();
+    if (generation !== openCellGeneration) return;
     const organLc  = organ?.toLowerCase();
     const organTag = organLc ? tags.find(tg => tg.organ?.toLowerCase() === organLc) : undefined;
     cellOrganEl.innerHTML =
@@ -254,6 +265,7 @@ async function openCellDetail(x: bigint, y: bigint): Promise<void> {
 
     await loadHistory(isCat, x, y, 0n, detailSampleLen, detailDecimals, true);
   } catch (e) {
+    if (generation !== openCellGeneration) return;
     cellOrganEl.innerHTML =
       `<span class="cell-detail__error">${e instanceof Error ? e.message : t('matrix.loadError')}</span>`;
   }
@@ -269,15 +281,15 @@ async function loadHistory(
   isFirst: boolean,
 ): Promise<void> {
   const getFn = isCat ? 'getCategoricalHistory' : 'getNumericalHistory';
-  const histRaw = (await window.zaryaAPI.read(getFn, [x, y, offset, HISTORY_PAGE])) as {
-    timestamps?: number[];
-    authors?:    string[];
-    values?:     bigint[];
-  };
+  const raw = await window.zaryaAPI.read(getFn, [x, y, offset, HISTORY_PAGE]);
+  // viem returns multiple named outputs as an array-like object with named properties.
+  // Electron IPC (structured clone) preserves only numeric indices, dropping named
+  // properties on arrays. Handle both formats: positional array and named object.
+  const r = raw as Record<string, unknown> | unknown[];
   const hist = {
-    timestamps: histRaw?.timestamps ?? [],
-    authors:    histRaw?.authors    ?? [],
-    values:     histRaw?.values     ?? [],
+    timestamps: (Array.isArray(r) ? r[0] : r.timestamps) as number[]  ?? [],
+    authors:    (Array.isArray(r) ? r[1] : r.authors)    as string[]  ?? [],
+    values:     (Array.isArray(r) ? r[2] : r.values)     as bigint[]  ?? [],
   };
 
   // Pre-fetch category names for categorical mode
@@ -294,7 +306,7 @@ async function loadHistory(
   }
 
   const rows = hist.timestamps.map((ts, i) => {
-    const val = hist.values[i];
+    const val = hist.values[i] ?? 0n;
     let displayVal: string;
     if (isCat) {
       displayVal = catNames?.get(val.toString()) ?? val.toString();
@@ -308,7 +320,7 @@ async function loadHistory(
     }
     return `<tr class="cell-detail__history-row">
       <td class="cell-detail__history-ts">${formatTimestamp(ts)}</td>
-      <td class="cell-detail__history-author"><code>${shortAddr(hist.authors[i])}</code></td>
+      <td class="cell-detail__history-author"><code>${shortAddr(hist.authors[i] ?? '')}</code></td>
       <td class="cell-detail__history-val">${displayVal}</td>
     </tr>`;
   }).join('');
@@ -352,15 +364,12 @@ async function renderAggregation(
   // Load up to 200 samples for aggregation
   const aggLimit = sampleLen < 200n ? sampleLen : 200n;
   const getFn    = isCat ? 'getCategoricalHistory' : 'getNumericalHistory';
-  const histRaw  = (await window.zaryaAPI.read(getFn, [x, y, 0n, aggLimit])) as {
-    timestamps?: number[];
-    authors?:    string[];
-    values?:     bigint[];
-  };
+  const raw2  = await window.zaryaAPI.read(getFn, [x, y, 0n, aggLimit]);
+  const r2 = raw2 as Record<string, unknown> | unknown[];
   const hist = {
-    timestamps: histRaw?.timestamps ?? [],
-    authors:    histRaw?.authors    ?? [],
-    values:     histRaw?.values     ?? [],
+    timestamps: (Array.isArray(r2) ? r2[0] : r2.timestamps) as number[]  ?? [],
+    authors:    (Array.isArray(r2) ? r2[1] : r2.authors)    as string[]  ?? [],
+    values:     (Array.isArray(r2) ? r2[2] : r2.values)     as bigint[]  ?? [],
   };
 
   if (isCat) {

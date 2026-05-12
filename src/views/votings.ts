@@ -1,5 +1,5 @@
 import { t } from '../i18n';
-import { currentAddress, isOffline } from '../state';
+import { currentAddress, isOffline, setIsOffline } from '../state';
 import { show } from '../utils';
 import { showDashboard } from './dashboard';
 import { showCreateVoting } from './createVoting';
@@ -19,6 +19,8 @@ let votingsRows: VotingRow[] = [];
 let castTargetId: string | null = null;
 let castSupport = true;
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
+let isRefreshing = false;
+let refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ---- DOM refs ----
 const votingsBackBtn    = document.getElementById('votings-back-btn')    as HTMLButtonElement;
@@ -303,8 +305,18 @@ function closeCastPanel(): void {
 }
 
 async function refreshVotings(): Promise<void> {
-  votingsRows = await loadVotings();
-  renderVotingsList();
+  if (isRefreshing) return;
+  isRefreshing = true;
+  try {
+    votingsRows = await loadVotings();
+    setIsOffline(false);
+    renderVotingsList();
+  } catch (e) {
+    setIsOffline(true);
+    votingsList.innerHTML = `<p class="votings__empty">${e instanceof Error ? e.message : t('votings.empty')}</p>`;
+  } finally {
+    isRefreshing = false;
+  }
 }
 
 export async function showVotings(): Promise<void> {
@@ -410,6 +422,10 @@ window.zaryaAPI.onEvent((eventName) => {
     ['VotingCreated', 'VotingFinalized', 'VoteCasted'].includes(eventName) &&
     (document.getElementById('votings-view') as HTMLElement).style.display !== 'none'
   ) {
-    refreshVotings();
+    if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
+    refreshDebounceTimer = setTimeout(() => {
+      refreshDebounceTimer = null;
+      refreshVotings();
+    }, 500);
   }
 });
