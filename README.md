@@ -134,7 +134,4 @@ zarya-standalone/
 
 ## Смарт-контракт / Smart contract
 
-ABI контракта `Zarya.sol` находится в `src/assets/json/zaryaAbi.json`.  
-Подробная документация по архитектуре контракта — в [whitepaper.md](whitepaper.md).  
-План интеграции UI с контрактом — в [PLAN.md](PLAN.md).
-
+ABI контракта `Zarya.sol` находится в `src/assets/json/zaryaAbi.json`. 
