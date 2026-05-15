@@ -1,9 +1,10 @@
 import { ref, onMounted } from 'vue';
 import { useAppState } from './useAppState';
 import { readConfig, writeConfig, testConnection } from '../services/configService';
-import { exportKey } from '../services/electronService';
 import { getBalance, getChain } from '../services/zaryaService';
 import type { AppConfig } from '../types/config';
+import { useExportKey } from './useExportKey';
+import { extractError } from './utils';
 
 const DEFAULT_CONTRACT_ADDRESS: `0x${string}` = '0x141EB27110329C82De3C95045C96f6eBF15fDc4b';
 const DEFAULT_CHAIN_ID = 11155111;
@@ -11,12 +12,11 @@ const DEFAULT_CHAIN_ID = 11155111;
 export function useSettings() {
   const { currentAddress, navigate } = useAppState();
 
+  const { exportStatusKey, exportStatusMsg, exporting, onExport } = useExportKey();
+
   const balance         = ref('...');
   const blockNumber     = ref('');
   const liveChainId     = ref('');
-  const exportStatusKey = ref('');
-  const exportStatusMsg = ref('');
-  const exporting       = ref(false);
 
   const contractAddress = ref(DEFAULT_CONTRACT_ADDRESS);
   const chainId         = ref(String(DEFAULT_CHAIN_ID));
@@ -40,19 +40,6 @@ export function useSettings() {
     if (chainResult.status === 'fulfilled') {
       blockNumber.value = chainResult.value.blockNumber;
       liveChainId.value = String(chainResult.value.chainId);
-    }
-  }
-
-  async function onExport(): Promise<void> {
-    exportStatusKey.value = ''; exportStatusMsg.value = '';
-    exporting.value = true;
-    try {
-      const saved = await exportKey();
-      exportStatusKey.value = saved ? 'wallet.exportDone' : 'wallet.exportCancelled';
-    } catch (e: unknown) {
-      exportStatusMsg.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      exporting.value = false;
     }
   }
 
@@ -92,7 +79,7 @@ export function useSettings() {
         else navigate('unlock');
       }, 800);
     } catch (e: unknown) {
-      statusMsg.value = e instanceof Error ? e.message : String(e); statusKey.value = '';
+      statusMsg.value = extractError(e); statusKey.value = '';
     } finally {
       saving.value = false;
     }

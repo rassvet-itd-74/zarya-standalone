@@ -18,8 +18,7 @@ const {
   fieldCatName, fieldDecimals, fieldMember, fieldTheme, fieldStatement,
   durationAmt, durationUnit,
   showIsCat, showX, showY, showValue, showAuthor, showCategory,
-  showCatName, showDecimals, showMember, showTheme, showStatement,
-  authorIsMe, isCatLabel,
+  showCatName, showDecimals, showMember, showTheme, showStatement, isCatLabel,
   setAuthorToMe, onSubmit,
 } = useVotingFieldsForm(props, payload => emit('submit', payload));
 </script>

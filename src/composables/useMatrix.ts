@@ -2,10 +2,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useAppState } from './useAppState';
 import { readContract, getLogs } from '../services/zaryaService';
 import type { MatrixMode } from '../types/matrix';
-
-function getArgs(log: unknown): Record<string, unknown> {
-  return ((log as Record<string, unknown>).args as Record<string, unknown>) ?? {};
-}
+import { getLogArgs as getArgs } from './utils';
 
 async function discoverDimensions(isCat: boolean) {
   const [numLogs, catLogs, stmtLogs] = await Promise.all([

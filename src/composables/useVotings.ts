@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAppState } from './useAppState';
 import { getLogs, watchEvent, unwatchEvent, readContract, writeContract, waitTx, onEvent } from '../services/zaryaService';
 import type { VotingRow, VotingTab, VotingType } from '../types/voting';
+import { getLogArgs as getArgs, shortAddress, formatTimestamp as formatDate } from './utils';
 
 const TYPE_EVENT_NAMES = [
   'NumericalValueVotingCreated', 'CategoricalValueVotingCreated',
@@ -19,18 +20,6 @@ const TYPE_KEY_MAP: Record<string, VotingType> = {
   ThemeVotingCreated:                'theme',
   StatementVotingCreated:            'statement',
 };
-
-function getArgs(log: unknown): Record<string, unknown> {
-  return ((log as Record<string, unknown>).args as Record<string, unknown>) ?? {};
-}
-
-function shortAddress(addr: string): string {
-  return addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
-}
-
-function formatDate(ts: number): string {
-  return new Date(ts * 1000).toLocaleString();
-}
 
 export function useVotings() {
   const { currentAddress, isOffline, navigate, createVotingPrefill } = useAppState();

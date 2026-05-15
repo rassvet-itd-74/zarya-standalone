@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { useAppState } from './useAppState';
 import { createKey } from '../services/electronService';
+import { extractError } from './utils';
 
 export function useSetup() {
   const { afterUnlock } = useAppState();
@@ -20,7 +21,7 @@ export function useSetup() {
       const address = await createKey(password.value);
       await afterUnlock(address);
     } catch (e: unknown) {
-      errorMsg.value = e instanceof Error ? e.message : String(e);
+      errorMsg.value = extractError(e);
     } finally {
       loading.value = false;
     }

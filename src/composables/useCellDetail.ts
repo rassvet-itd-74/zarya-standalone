@@ -3,6 +3,7 @@ import { useAppState } from './useAppState';
 import { readContract } from '../services/zaryaService';
 import { readTags } from '../services/tagsService';
 import type { NumericalAgg, CategoricalAgg } from '../types/matrix';
+import { shortAddress as shortAddr, formatTimestamp } from './utils';
 
 const HISTORY_PAGE = 20n;
 
@@ -27,14 +28,6 @@ export function useCellDetail(props: CellDetailProps) {
   const loadingMore  = ref(false);
   const errorKey     = ref('');
   const errorMsg     = ref('');
-
-  function shortAddr(addr: string): string {
-    return addr.length > 10 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
-  }
-
-  function formatTimestamp(ts: number): string {
-    return new Date(ts * 1000).toLocaleString();
-  }
 
   function formatVal(val: bigint): string {
     if (props.isCategorical) return val.toString();

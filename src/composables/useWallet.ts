@@ -1,17 +1,16 @@
 import { ref, onMounted } from 'vue';
 import { useAppState } from './useAppState';
-import { exportKey } from '../services/electronService';
 import { readConfig } from '../services/configService';
 import { getBalance, getChain } from '../services/zaryaService';
+import { useExportKey } from './useExportKey';
 
 export function useWallet() {
   const { currentAddress, navigate } = useAppState();
 
+  const { exportStatusKey, exportStatusMsg, exporting, onExport } = useExportKey();
+
   const balance         = ref('...');
   const blockNumber     = ref('');
-  const exportStatusKey = ref('');
-  const exportStatusMsg = ref('');
-  const exporting       = ref(false);
 
   async function load(): Promise<void> {
     balance.value = '...';
@@ -25,19 +24,6 @@ export function useWallet() {
       : '?';
     if (chainResult.status === 'fulfilled') {
       blockNumber.value = chainResult.value.blockNumber;
-    }
-  }
-
-  async function onExport(): Promise<void> {
-    exportStatusKey.value = ''; exportStatusMsg.value = '';
-    exporting.value = true;
-    try {
-      const saved = await exportKey();
-      exportStatusKey.value = saved ? 'wallet.exportDone' : 'wallet.exportCancelled';
-    } catch (e: unknown) {
-      exportStatusMsg.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      exporting.value = false;
     }
   }
 
