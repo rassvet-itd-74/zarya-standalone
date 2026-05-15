@@ -1,8 +1,8 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import fs from 'node:fs';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { hasKey, createKeyRaw, loadKeyRaw, exportKey, importKey } from './keyManager';
-import { readConfig, writeConfig, Config } from './configManager';
 import { readTags, writeTags, exportTags, importTags, resolveOrganTag } from './organTagsManager';
 import type { OrganTag } from './organTagsManager';
 import { createPublicClient, http } from 'viem';
@@ -19,7 +19,39 @@ import {
   getChainInfo,
   getAddressBalance,
   checkOrganMembership,
+  type Config,
 } from './zaryaClient';
+
+// ---------------------------------------------------------------------------
+// Config helpers (persisted to userData/config.json)
+// ---------------------------------------------------------------------------
+
+function configPath(): string {
+  return path.join(app.getPath('userData'), 'config.json');
+}
+
+function readConfig(): Config | null {
+  const p = configPath();
+  if (!fs.existsSync(p)) return null;
+  try {
+    const raw = JSON.parse(fs.readFileSync(p, 'utf-8'));
+    if (
+      typeof raw === 'object' &&
+      raw !== null &&
+      typeof raw.contractAddress === 'string' &&
+      typeof raw.chainId === 'number'
+    ) {
+      return raw as Config;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeConfig(config: Config): void {
+  fs.writeFileSync(configPath(), JSON.stringify(config, null, 2), { mode: 0o600 });
+}
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {

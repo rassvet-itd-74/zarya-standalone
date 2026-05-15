@@ -23,12 +23,16 @@ const config: ForgeConfig = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: 'Party \"RASSVET\"',
-          name: 'zarya-standalone'
+          owner: 'rassvet-itd-74',
+          name: 'zarya-standalone',
         },
-        prerelease: true
-      }
-    }
+        authToken: process.env.GITHUB_TOKEN,
+        prerelease: true,
+        draft: false,
+        generateReleaseNotes: true,
+        tagPrefix: 'v',
+      },
+    },
   ],
   plugins: [
     new VitePlugin({

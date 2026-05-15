@@ -10,7 +10,15 @@ import type { Abi, AbiEvent, Log, Account, HttpTransport, Chain } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { WebContents } from 'electron';
 import zaryaAbi from './assets/json/zaryaAbi.json';
-import type { Config } from './configManager';
+
+// ---------------------------------------------------------------------------
+// Config shape — shared with main process
+// ---------------------------------------------------------------------------
+
+export interface Config {
+  contractAddress: string;
+  chainId: number;
+}
 
 // ---------------------------------------------------------------------------
 // Module-level state — all private key material stays in this process

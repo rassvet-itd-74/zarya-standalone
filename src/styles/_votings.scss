@@ -59,6 +59,7 @@
     opacity:    0.5;
     text-align: center;
     padding:    2.5rem 0;
+    margin:     0;
   }
 }
 
@@ -71,8 +72,9 @@
   border-left:   3px solid var(--base-300);
   transition:    border-color 0.2s;
 
-  &--active  { border-left-color: var(--primary); }
-  &--expired { border-left-color: var(--secondary); opacity: 0.82; }
+  &--active    { border-left-color: var(--primary); }
+  &--expired   { border-left-color: var(--secondary); opacity: 0.82; }
+  &--finalized { border-left-color: var(--neutral-content); opacity: 0.7; }
 
   &__header {
     display:       flex;
@@ -115,45 +117,46 @@
   &__meta {
     font-size:     0.78rem;
     opacity:       0.5;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.2rem;
 
     code { font-size: 0.76rem; }
   }
 
-  &__counts {
+  &__proposal {
+    font-size:     0.82rem;
+    margin-bottom: 0.3rem;
+    word-break:    break-word;
+  }
+
+  &__results {
     display:              flex;
     gap:                  0.75rem;
-    font-size:            0.85rem;
+    font-size:            0.875rem;
     font-variant-numeric: tabular-nums;
-    margin-bottom:        0.45rem;
+    margin-bottom:        0.3rem;
+    align-items:          baseline;
+  }
+
+  &__result-label {
+    font-size:    0.75rem;
+    opacity:      0.55;
+    margin-right: 0.2rem;
   }
 
   &__for     { color: #16a34a; }
   &__against { color: $color-error; }
+
+  &__ended {
+    font-size:     0.78rem;
+    opacity:       0.55;
+    margin-bottom: 0.35rem;
+  }
 
   &__actions {
     display:     flex;
     gap:         0.45rem;
     align-items: flex-start;
     flex-wrap:   wrap;
-  }
-
-  &__exec {
-    display:     flex;
-    gap:         0.35rem;
-    align-items: center;
-    flex-wrap:   wrap;
-
-    // Narrow number inputs inside the execute row
-    .field__input--sm { width: 5.5rem; }
-  }
-
-  &__exec-status {
-    display:    block;
-    width:      100%;
-    font-size:  0.8rem;
-    color:      $color-error;
-    margin-top: 0.2rem;
   }
 }
 
@@ -168,7 +171,7 @@
   &__label {
     font-weight:   600;
     font-size:     0.9rem;
-    margin-bottom: 0.55rem;
+    margin:        0 0 0.55rem;
   }
 
   &__support {
@@ -182,16 +185,20 @@
     outline-offset: 2px;
   }
 
+  // select inside the panel
+  .field__input--sm {
+    margin-bottom: 0.5rem;
+  }
+
   &__actions {
-    display:    flex;
-    gap:        0.45rem;
-    margin-top: 0.5rem;
+    display: flex;
+    gap:     0.45rem;
   }
 
   &__status {
     font-size:  0.85rem;
     min-height: 1.2rem;
-    margin-top: 0.35rem;
+    margin:     0.35rem 0 0;
     opacity:    0.8;
   }
 }

@@ -19,7 +19,7 @@
 }
 
 // Nudge app content down when banner is visible
-body:has(#rpc-banner:not([style*="display:none"])) #app {
+body:has(.rpc-banner:not([style*="display: none"])) #app {
   padding-top: 2.4rem;
 }
 

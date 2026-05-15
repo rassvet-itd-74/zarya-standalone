@@ -1,9 +1,14 @@
 @use './variables' as *;
 
+html {
+  font-size:       14px;
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family:      $font-stack;
   margin:           auto;
-  max-width:        38rem;
+  max-width:        52rem;
   padding:          2rem;
   background-color: var(--base-100);
   color:            var(--base-content);
