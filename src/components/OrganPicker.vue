@@ -1,51 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
 import { useI18n } from '../composables/useI18n';
-import { readContract } from '../services/zaryaService';
+import { useOrganPicker, ORGAN_TYPES, ORGAN_REGIONS } from '../composables/useOrganPicker';
 
-defineProps<{ modelValue: `0x${string}` | null }>();
-const emit = defineEmits<{ 'update:modelValue': [organ: `0x${string}` | null] }>();
+const props = defineProps<{ modelValue: `0x${string}` | null }>();
+const emit  = defineEmits<{ 'update:modelValue': [organ: `0x${string}` | null] }>();
 
 const { t } = useI18n();
-
-const ORGAN_TYPES   = [0, 1, 2, 3, 4, 5, 6, 7];
-const ORGAN_REGIONS = Array.from({ length: 98 }, (_, i) => i);
-
-const organTypeVal   = ref(0);
-const organRegionVal = ref(74);
-const organNumber    = ref(0);
-
-// Types 0–1 (local) need region + number.
-// Types 2–4 (regional) need region only.
-// Types 5–7 (Chairperson, Central Council, Congress) need neither.
-const needsRegion = computed(() => organTypeVal.value <= 4);
-const needsNumber = computed(() => organTypeVal.value <= 1);
-const statusKey      = ref('');
-const statusSuffix   = ref('');
-const resolving      = ref(false);
-
-async function resolve(): Promise<void> {
-  resolving.value   = true;
-  statusKey.value   = '';
-  statusSuffix.value = '...';
-  try {
-    const regionArg = needsRegion.value ? organRegionVal.value : 0;
-    const numberArg = needsNumber.value ? organNumber.value : 0;
-    const [organ, identifier] = await Promise.all([
-      readContract<`0x${string}`>('getPartyOrgan',           [organTypeVal.value, regionArg, numberArg]),
-      readContract<string>       ('getPartyOrganIdentifier', [organTypeVal.value, regionArg, numberArg]),
-    ]);
-    emit('update:modelValue', organ);
-    statusKey.value    = 'createVoting.organResolved';
-    statusSuffix.value = `: ${identifier} (${organ.slice(0, 10)}...)`;
-  } catch {
-    emit('update:modelValue', null);
-    statusKey.value    = 'createVoting.organUnresolved';
-    statusSuffix.value = '';
-  } finally {
-    resolving.value = false;
-  }
-}
+const {
+  organTypeVal, organRegionVal, organNumber,
+  needsRegion, needsNumber,
+  statusKey, statusSuffix, resolving,
+  resolve,
+} = useOrganPicker(organ => emit('update:modelValue', organ));
 </script>
 
 <template>
